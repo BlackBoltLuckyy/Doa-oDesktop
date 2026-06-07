@@ -2,7 +2,12 @@
   "permissions": {
     "allow": [
       "Bash(mkdir -p \"C:/Users/lucas_jdm0e/Downloads/Doa-oDesktop-master/Doa-oDesktop-master/assets/images\")",
-      "Bash(touch \"C:/Users/lucas_jdm0e/Downloads/Doa-oDesktop-master/Doa-oDesktop-master/assets/images/.gitkeep\")"
+      "Bash(touch \"C:/Users/lucas_jdm0e/Downloads/Doa-oDesktop-master/Doa-oDesktop-master/assets/images/.gitkeep\")",
+      "Bash(flutter pub *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell($flutter = \"C:\\\\Users\\\\lucas_jdm0e\\\\flutter\\\\bin\\\\flutter.bat\"; cd \"C:\\\\Users\\\\lucas_jdm0e\\\\Downloads\\\\Doa-oDesktop-master\\\\Doa-oDesktop-master\"; & $flutter pub get 2>&1)",
+      "PowerShell($flutter = \"C:\\\\Users\\\\lucas_jdm0e\\\\flutter\\\\flutter\\\\bin\\\\flutter.bat\"; Set-Location \"C:\\\\Users\\\\lucas_jdm0e\\\\Downloads\\\\Doa-oDesktop-master\\\\Doa-oDesktop-master\"; & $flutter pub get 2>&1)",
+      "PowerShell($flutter = \"C:\\\\Users\\\\lucas_jdm0e\\\\flutter\\\\flutter\\\\bin\\\\flutter.bat\"; Set-Location \"C:\\\\Users\\\\lucas_jdm0e\\\\Downloads\\\\Doa-oDesktop-master\\\\Doa-oDesktop-master\"; & $flutter analyze 2>&1)"
     ]
   }
 }

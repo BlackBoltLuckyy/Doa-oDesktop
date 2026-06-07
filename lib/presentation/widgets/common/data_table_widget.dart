@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 class DataTableWidget<T> extends StatelessWidget {
   final List<String> columns;
   final List<T> rows;
-  final Widget Function(T item, int index) rowBuilder;
+  final TableRow Function(T item, int index) rowBuilder;
   final int totalItems;
   final int currentPage;
   final int pageSize;
