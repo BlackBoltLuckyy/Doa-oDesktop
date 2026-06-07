@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:/Users/lucas_jdm0e/Downloads/Doa-oDesktop-master/Doa-oDesktop-master/assets/images\")",
+      "Bash(touch \"C:/Users/lucas_jdm0e/Downloads/Doa-oDesktop-master/Doa-oDesktop-master/assets/images/.gitkeep\")"
+    ]
+  }
+}
