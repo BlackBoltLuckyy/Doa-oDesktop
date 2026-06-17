@@ -35,7 +35,7 @@ class SidebarWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Painel ONG',
+                  'Doe+',
                   style: AppTextStyles.heading.copyWith(color: Colors.white),
                 ),
               ],

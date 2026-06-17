@@ -216,7 +216,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Painel ONG',
+                          'Doe+',
                           style: AppTextStyles.heading
                               .copyWith(color: AppColors.primaryColor),
                         ),

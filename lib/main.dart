@@ -17,7 +17,7 @@ Future<void> main() async {
     size: Size(1280, 800),
     minimumSize: Size(1024, 768),
     center: true,
-    title: 'Painel ONG — Sistema de Doações',
+    title: 'Doe+ — Sistema de Doações',
     titleBarStyle: TitleBarStyle.normal,
   );
 

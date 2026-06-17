@@ -89,7 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(width: 12),
                     Text(
-                      'Painel ONG',
+                      'Doe+',
                       style: AppTextStyles.heading.copyWith(
                         color: AppColors.primaryColor,
                       ),
