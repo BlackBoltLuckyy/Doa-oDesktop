@@ -35,10 +35,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       if (authState.isInitializing) return null;
 
       final isAuthenticated = authState.isAuthenticated;
-      final isLoginPage = state.matchedLocation == AppRoutes.kLogin;
+      final loc = state.matchedLocation;
+      final isPublicPage =
+          loc == AppRoutes.kLogin || loc == AppRoutes.kCadastro;
 
-      if (!isAuthenticated && !isLoginPage) return AppRoutes.kLogin;
-      if (isAuthenticated && isLoginPage) return AppRoutes.kDashboard;
+      if (!isAuthenticated && !isPublicPage) return AppRoutes.kLogin;
+      if (isAuthenticated && isPublicPage) return AppRoutes.kDashboard;
       return null;
     },
     routes: AppRoutes.routes,

@@ -22,10 +22,16 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
     (i) => {
       'id': i + 1,
       'nome': [
-        'Maria Silva', 'João Costa', 'Ana Souza', 'Pedro Alves',
-        'Carla Lima', 'Roberto Nunes', 'Lucia Santos',
+        'Maria Silva',
+        'João Costa',
+        'Ana Souza',
+        'Pedro Alves',
+        'Carla Lima',
+        'Roberto Nunes',
+        'Lucia Santos',
       ][i],
-      'cpf': '${(i + 1) * 111}.${(i + 1) * 222}.${(i + 1) * 333}-${(i + 1) * 11}',
+      'cpf':
+          '${(i + 1) * 111}.${(i + 1) * 222}.${(i + 1) * 333}-${(i + 1) * 11}',
       'telefone': '(11) 9${i + 1}000-000${i}',
       'dependentes': [3, 1, 4, 2, 5, 0, 3][i],
       'ultimaDistribuicao': '${(i * 3 + 1).toString().padLeft(2, '0')}/05/2026',
@@ -44,8 +50,10 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
             Text('Beneficiários', style: AppTextStyles.displayTitle),
             ElevatedButton.icon(
               onPressed: () => context.go('${AppRoutes.kBeneficiarios}/novo'),
-              icon: const Icon(Icons.person_add_outlined, size: 18, color: Colors.white),
-              label: const Text('Novo beneficiário', style: TextStyle(color: Colors.white)),
+              icon: const Icon(Icons.person_add_outlined,
+                  size: 18, color: Colors.white),
+              label: const Text('Novo beneficiário',
+                  style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondaryColor,
               ),
@@ -53,11 +61,15 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
           ],
         ),
         const SizedBox(height: 20),
-
         DataTableWidget<Map<String, dynamic>>(
           columns: const [
-            'Nome', 'CPF', 'Telefone', 'Dependentes',
-            'Última distribuição', 'Status', 'Ações',
+            'Nome',
+            'CPF',
+            'Telefone',
+            'Dependentes',
+            'Última distribuição',
+            'Status',
+            'Ações',
           ],
           rows: _rows,
           totalItems: _rows.length,
@@ -75,12 +87,14 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
               children: [
                 // Nome com avatar
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     children: [
                       CircleAvatar(
                         radius: 14,
-                        backgroundColor: AppColors.primaryColor.withOpacity(0.1),
+                        backgroundColor:
+                            AppColors.primaryColor.withOpacity(0.1),
                         child: Text(
                           (item['nome'] as String)[0],
                           style: const TextStyle(
@@ -91,7 +105,8 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(item['nome'] as String, style: const TextStyle(fontSize: 13)),
+                      Text(item['nome'] as String,
+                          style: const TextStyle(fontSize: 13)),
                     ],
                   ),
                 ),
@@ -100,9 +115,11 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
                 _Cell(item['dependentes'].toString()),
                 _Cell(item['ultimaDistribuicao'] as String),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: isActive
                           ? AppColors.statusApproved.withOpacity(0.1)
@@ -112,7 +129,8 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
                     child: Text(
                       item['status'] as String,
                       style: TextStyle(
-                        color: isActive ? AppColors.statusApproved : Colors.grey,
+                        color:
+                            isActive ? AppColors.statusApproved : Colors.grey,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -130,15 +148,18 @@ class _BeneficiariesScreenState extends State<BeneficiariesScreen> {
                         onPressed: () => context.go(
                           '${AppRoutes.kBeneficiarios}/${item['id']}/editar',
                         ),
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        constraints:
+                            const BoxConstraints(minWidth: 32, minHeight: 32),
                         padding: EdgeInsets.zero,
                       ),
                       IconButton(
-                        icon: const Icon(Icons.local_shipping_outlined, size: 18),
+                        icon:
+                            const Icon(Icons.local_shipping_outlined, size: 18),
                         tooltip: 'Nova distribuição',
                         color: AppColors.secondaryColor,
                         onPressed: () => context.go(AppRoutes.kDistribuicoes),
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        constraints:
+                            const BoxConstraints(minWidth: 32, minHeight: 32),
                         padding: EdgeInsets.zero,
                       ),
                     ],

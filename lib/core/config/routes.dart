@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../presentation/layouts/main_layout.dart';
 import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/beneficiaries/beneficiaries_screen.dart';
 import '../../presentation/screens/beneficiaries/beneficiary_form_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
@@ -17,6 +18,7 @@ class AppRoutes {
   AppRoutes._();
 
   static const kLogin = '/login';
+  static const kCadastro = '/cadastro';
   static const kDashboard = '/dashboard';
   static const kDoacoes = '/doacoes';
   static const kEstoque = '/estoque';
@@ -28,6 +30,10 @@ class AppRoutes {
     GoRoute(
       path: kLogin,
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: kCadastro,
+      builder: (context, state) => const RegisterScreen(),
     ),
     ShellRoute(
       builder: (context, state, child) => MainLayout(child: child),

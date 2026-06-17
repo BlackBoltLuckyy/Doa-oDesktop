@@ -4,8 +4,7 @@ import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 import 'local_storage_service.dart';
 
-/// Orquestra o fluxo de autenticação: chama o repositório HTTP e persiste
-/// o token e os dados do usuário no armazenamento local.
+/// Orquestra os fluxos de autenticação e cadastro.
 class AuthService {
   final AuthRepository _repository;
   final LocalStorageService _storage;
@@ -22,6 +21,20 @@ class AuthService {
       await _storage.saveUser(result.value.usuario);
     }
     return result;
+  }
+
+  Future<Either<String, String>> register({
+    required String nome,
+    required String email,
+    required String senha,
+    required String papel,
+  }) {
+    return _repository.register(
+      nome: nome,
+      email: email,
+      senha: senha,
+      papel: papel,
+    );
   }
 
   Future<void> logout() async {
