@@ -11,10 +11,16 @@ final sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
   // Infraestrutura
-  sl.registerSingleton<LocalStorageService>(LocalStorageService());
+  final localStorageService = LocalStorageService();
+  sl.registerSingleton<LocalStorageService>(localStorageService);
 
+  final savedApiBaseUrl = await localStorageService.readApiBaseUrl();
   sl.registerSingleton<AppConfig>(
-    AppConfig(baseUrl: dotenv.env['API_BASE_URL'] ?? 'http://localhost:8080/api'),
+    AppConfig(
+      baseUrl: savedApiBaseUrl ??
+          dotenv.env['API_BASE_URL'] ??
+          'http://localhost:8080',
+    ),
   );
 
   // O token é lido do storage a cada requisição — sem estado estático no cliente.

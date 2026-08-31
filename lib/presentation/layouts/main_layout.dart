@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/config/routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../providers/auth_provider.dart';
-import '../widgets/common/confirm_dialog.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../core/theme/theme_controller.dart';
 import '../widgets/sidebar/sidebar_widget.dart';
+
+const _routeTitles = {
+  AppRoutes.kDashboard: 'Dashboard',
+  AppRoutes.kDoacoes: 'Doações',
+  AppRoutes.kEstoque: 'Estoque',
+  AppRoutes.kBeneficiarios: 'Beneficiários',
+  AppRoutes.kDistribuicoes: 'Distribuições',
+  AppRoutes.kConfiguracoes: 'Configurações',
+};
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -14,101 +25,99 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      body: Row(
-        children: [
-          const SidebarWidget(),
-          Expanded(
-            child: Column(
-              children: [
-                const _TopHeader(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: child,
-                  ),
+      backgroundColor: tokens.bg,
+      body: Container(
+        decoration: tokens.dashboardGradient != null
+            ? BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: tokens.dashboardGradient!,
                 ),
-              ],
+              )
+            : null,
+        child: Row(
+          children: [
+            const SidebarWidget(),
+            Expanded(
+              child: Column(
+                children: [
+                  const _TopBar(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppSpacing.pagePadding),
+                      child: child,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-class _TopHeader extends ConsumerWidget {
-  const _TopHeader();
+class _TopBar extends ConsumerWidget {
+  const _TopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authProvider).user;
+    final tokens = context.tokens;
+    final location = GoRouterState.of(context).matchedLocation;
+    final themeMode = ref.watch(themeProvider);
+
+    String title = 'Doe+';
+    for (final entry in _routeTitles.entries) {
+      if (location.startsWith(entry.key)) {
+        title = entry.value;
+        break;
+      }
+    }
 
     return Container(
-      height: 60,
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceColor,
-        border: Border(
-          bottom: BorderSide(color: AppColors.borderColor, width: 1),
-        ),
+      height: AppSpacing.topbarHeight,
+      decoration: BoxDecoration(
+        color: tokens.topbarBg,
+        border: Border(bottom: BorderSide(color: tokens.border)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          if (user != null) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primaryColor,
-              child: Text(
-                user.nome.isNotEmpty ? user.nome[0].toUpperCase() : 'U',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+          Text(title, style: AppTextStyles.heading.copyWith(color: tokens.text)),
+          const Spacer(),
+          IconButton(
+            icon: Icon(
+              themeMode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            ),
+            tooltip: themeMode == ThemeMode.dark ? 'Modo claro' : 'Modo escuro',
+            onPressed: () => ref.read(themeProvider.notifier).toggle(),
+          ),
+          const SizedBox(width: 4),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              const IconButton(
+                icon: Icon(Icons.notifications_outlined),
+                onPressed: null,
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.secondary,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.nome,
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  user.papel,
-                  style: AppTextStyles.label,
-                ),
-              ],
-            ),
-            const SizedBox(width: 20),
-            Container(
-              width: 1,
-              height: 28,
-              color: AppColors.borderColor,
-            ),
-            const SizedBox(width: 8),
-          ],
-          IconButton(
-            icon: const Icon(Icons.logout, size: 20),
-            tooltip: 'Sair',
-            color: Colors.black54,
-            onPressed: () async {
-              final confirmed = await ConfirmDialog.show(
-                context: context,
-                title: 'Encerrar sessão',
-                message: 'Deseja sair do sistema?',
-                confirmLabel: 'Sair',
-                confirmColor: AppColors.statusRejected,
-              );
-              if (confirmed) {
-                ref.read(authProvider.notifier).logout();
-              }
-            },
+            ],
           ),
         ],
       ),

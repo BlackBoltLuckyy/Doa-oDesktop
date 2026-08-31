@@ -7,6 +7,17 @@ import '../models/user_model.dart';
 class LocalStorageService {
   static const String _tokenKey = 'auth_token';
   static const String _userKey = 'auth_user';
+  static const String _apiBaseUrlKey = '@doemais:apiBaseUrl';
+
+  Future<void> saveApiBaseUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_apiBaseUrlKey, url);
+  }
+
+  Future<String?> readApiBaseUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_apiBaseUrlKey);
+  }
 
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();

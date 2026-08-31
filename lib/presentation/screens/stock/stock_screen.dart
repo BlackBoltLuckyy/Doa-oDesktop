@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/config/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_tokens.dart';
 import '../../widgets/common/data_table_widget.dart';
+import '../../widgets/common/gradient_button.dart';
+import '../../widgets/common/page_header.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -37,83 +40,63 @@ class _StockScreenState extends State<StockScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Gestão de estoque', style: AppTextStyles.displayTitle),
-            ElevatedButton.icon(
-              onPressed: () => context.go('${AppRoutes.kEstoque}/entrada'),
-              icon: const Icon(Icons.add, size: 18, color: Colors.white),
-              label: const Text('Nova entrada', style: TextStyle(color: Colors.white)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondaryColor,
-              ),
-            ),
-          ],
+        PageHeader(
+          title: 'Gestão de estoque',
+          subtitle: 'Itens disponíveis para distribuição.',
+          trailing: GradientButton(
+            label: 'Nova entrada',
+            icon: Icons.add,
+            onPressed: () => context.go('${AppRoutes.kEstoque}/entrada'),
+          ),
         ),
         const SizedBox(height: 20),
 
         DataTableWidget<Map<String, dynamic>>(
           columns: const [
-            '#', 'Item', 'Categoria', 'Quantidade', 'Unidade',
-            'Entrada', 'Origem', 'Ações',
+            '#', 'Item', 'Categoria', 'Quantidade', 'Unidade', 'Entrada', 'Origem', 'Ações',
           ],
+          columnFlex: const [1, 2, 2, 2, 1, 1, 2, 1],
           rows: _rows,
           totalItems: _rows.length,
           currentPage: _currentPage,
           pageSize: _pageSize,
           onPageChanged: (p) => setState(() => _currentPage = p),
           onSearch: (query) {},
-          rowBuilder: (item, index) {
+          cellsBuilder: (item, index) {
             final qtd = item['quantidade'] as int;
             final isLow = qtd < 10;
+            final tokens = context.tokens;
 
-            return TableRow(
-              decoration: BoxDecoration(
-                color: index.isEven ? Colors.white : const Color(0xFFF9FAFB),
+            return [
+              _Cell(item['id'].toString()),
+              _Cell(item['item'] as String),
+              _Cell(item['categoria'] as String),
+              Row(
+                children: [
+                  Text(
+                    qtd.toString(),
+                    style: AppTextStyles.body.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: isLow ? AppColors.statusRejected : tokens.text,
+                    ),
+                  ),
+                  if (isLow) ...[
+                    const SizedBox(width: 6),
+                    const Icon(Icons.warning_amber, size: 14, color: AppColors.warning),
+                  ],
+                ],
               ),
-              children: [
-                _Cell(item['id'].toString()),
-                _Cell(item['item'] as String),
-                _Cell(item['categoria'] as String),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Row(
-                    children: [
-                      Text(
-                        qtd.toString(),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: isLow ? AppColors.statusRejected : Colors.black87,
-                          fontSize: 13,
-                        ),
-                      ),
-                      if (isLow) ...[
-                        const SizedBox(width: 6),
-                        const Icon(
-                          Icons.warning_amber,
-                          size: 14,
-                          color: AppColors.statusPending,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                _Cell(item['unidade'] as String),
-                _Cell(item['data'] as String),
-                _Cell(item['origem'] as String),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: IconButton(
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    tooltip: 'Ajustar quantidade',
-                    onPressed: () {},
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ],
-            );
+              _Cell(item['unidade'] as String),
+              _Cell(item['data'] as String),
+              _Cell(item['origem'] as String),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                tooltip: 'Ajustar quantidade',
+                onPressed: () {},
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                padding: EdgeInsets.zero,
+              ),
+            ];
           },
         ),
       ],
@@ -124,13 +107,13 @@ class _StockScreenState extends State<StockScreen> {
 class _Cell extends StatelessWidget {
   final String text;
 
-  const _Cell(this.text);
+  const _Cell(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Text(text, style: const TextStyle(fontSize: 13)),
+    return Text(
+      text,
+      style: AppTextStyles.body.copyWith(color: context.tokens.text, fontSize: 13),
     );
   }
 }

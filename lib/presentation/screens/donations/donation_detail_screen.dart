@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../widgets/common/app_card.dart';
 import '../../widgets/common/confirm_dialog.dart';
+import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/status_badge.dart';
 
 class DonationDetailScreen extends StatelessWidget {
@@ -13,10 +16,11 @@ class DonationDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Navegação de volta
         Row(
           children: [
             IconButton(
@@ -27,70 +31,64 @@ class DonationDetailScreen extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               'Doações / Detalhe #$donationId',
-              style: AppTextStyles.body.copyWith(color: Colors.black54),
+              style: AppTextStyles.body.copyWith(color: tokens.textMuted),
             ),
           ],
         ),
         const SizedBox(height: 16),
 
-        // Conteúdo principal
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Casacos e roupas infantis',
-                            style: AppTextStyles.displayTitle,
-                          ),
-                          const SizedBox(height: 10),
-                          const StatusBadge(status: 'PENDENTE'),
-                        ],
-                      ),
+        AppCard(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Casacos e roupas infantis',
+                          style: AppTextStyles.pageTitle.copyWith(color: tokens.text),
+                        ),
+                        const SizedBox(height: 10),
+                        const StatusBadge(status: 'PENDENTE'),
+                      ],
                     ),
-                    _ActionButtons(donationId: donationId),
-                  ],
-                ),
-                const SizedBox(height: 28),
-
-                const Divider(color: AppColors.borderColor),
-                const SizedBox(height: 20),
-
-                // Dados do doador
-                Text('Dados do doador', style: AppTextStyles.heading),
-                const SizedBox(height: 14),
-                _InfoRow(label: 'Nome', value: 'José Pereira'),
-                _InfoRow(label: 'Telefone', value: '(11) 99999-9999'),
-                _InfoRow(label: 'Endereço', value: 'Rua das Flores, 123 — São Paulo/SP'),
-                const SizedBox(height: 20),
-
-                // Descrição
-                Text('Descrição do item', style: AppTextStyles.heading),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundLight,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.borderColor),
                   ),
-                  child: Text(
-                    'Pacote com 10 casacos de inverno e 5 peças de roupas infantis em bom estado. '
-                    'Tamanhos variados entre 2 e 8 anos.',
-                    style: AppTextStyles.body,
-                  ),
+                  _ActionButtons(donationId: donationId),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Divider(color: tokens.border),
+              const SizedBox(height: 20),
+
+              Text('Dados do doador', style: AppTextStyles.heading.copyWith(color: tokens.text)),
+              const SizedBox(height: 14),
+              const _InfoRow(label: 'Nome', value: 'José Pereira'),
+              const _InfoRow(label: 'Telefone', value: '(11) 99999-9999'),
+              const _InfoRow(label: 'Endereço', value: 'Rua das Flores, 123 — São Paulo/SP'),
+              const SizedBox(height: 20),
+
+              Text('Descrição do item', style: AppTextStyles.heading.copyWith(color: tokens.text)),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: tokens.surfaceRaised,
+                  borderRadius: BorderRadius.circular(AppRadius.input),
+                  border: Border.all(color: tokens.border),
                 ),
-              ],
-            ),
+                child: Text(
+                  'Pacote com 10 casacos de inverno e 5 peças de roupas infantis em bom estado. '
+                  'Tamanhos variados entre 2 e 8 anos.',
+                  style: AppTextStyles.body.copyWith(color: tokens.text),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -102,10 +100,12 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({super.key, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -115,14 +115,15 @@ class _InfoRow extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: const TextStyle(
+              style: AppTextStyles.label.copyWith(
+                color: tokens.textMuted,
                 fontWeight: FontWeight.w600,
-                color: Colors.black54,
-                fontSize: 13,
               ),
             ),
           ),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 14))),
+          Expanded(
+            child: Text(value, style: AppTextStyles.body.copyWith(color: tokens.text)),
+          ),
         ],
       ),
     );
@@ -132,30 +133,22 @@ class _InfoRow extends StatelessWidget {
 class _ActionButtons extends StatelessWidget {
   final String donationId;
 
-  const _ActionButtons({required this.donationId});
+  const _ActionButtons({super.key, required this.donationId});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        ElevatedButton.icon(
+        GradientButton(
+          label: 'Aprovar',
+          icon: Icons.check,
           onPressed: () => _onApprove(context),
-          icon: const Icon(Icons.check, size: 18, color: Colors.white),
-          label: const Text('Aprovar', style: TextStyle(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.statusApproved,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
         ),
         const SizedBox(width: 12),
-        ElevatedButton.icon(
+        GhostButton(
+          label: 'Recusar',
+          icon: Icons.close,
           onPressed: () => _onReject(context),
-          icon: const Icon(Icons.close, size: 18, color: Colors.white),
-          label: const Text('Recusar', style: TextStyle(color: Colors.white)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.statusRejected,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
         ),
       ],
     );
@@ -168,6 +161,7 @@ class _ActionButtons extends StatelessWidget {
       message: 'Confirmar a aprovação desta doação?',
       confirmLabel: 'Aprovar',
       confirmColor: AppColors.statusApproved,
+      icon: Icons.check_circle_outline,
     );
     if (confirmed && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -186,6 +180,7 @@ class _ActionButtons extends StatelessWidget {
       message: 'Confirmar a recusa desta doação?',
       confirmLabel: 'Recusar',
       confirmColor: AppColors.statusRejected,
+      icon: Icons.cancel_outlined,
     );
     if (confirmed && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

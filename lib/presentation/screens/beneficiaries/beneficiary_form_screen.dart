@@ -4,6 +4,10 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../widgets/common/app_card.dart';
+import '../../widgets/common/app_text_field.dart';
+import '../../widgets/common/gradient_button.dart';
 
 class BeneficiaryFormScreen extends StatefulWidget {
   /// Null para criação, preenchido para edição.
@@ -39,10 +43,11 @@ class _BeneficiaryFormScreenState extends State<BeneficiaryFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Navegação de volta
         Row(
           children: [
             IconButton(
@@ -53,142 +58,100 @@ class _BeneficiaryFormScreenState extends State<BeneficiaryFormScreen> {
             const SizedBox(width: 4),
             Text(
               'Beneficiários / ${_isEditing ? 'Editar' : 'Novo'}',
-              style: AppTextStyles.body.copyWith(color: Colors.black54),
+              style: AppTextStyles.body.copyWith(color: tokens.textMuted),
             ),
           ],
         ),
         const SizedBox(height: 8),
-
         Text(
           _isEditing ? 'Editar beneficiário' : 'Novo beneficiário',
-          style: AppTextStyles.displayTitle,
+          style: AppTextStyles.pageTitle.copyWith(color: tokens.text),
         ),
         const SizedBox(height: 20),
 
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(28),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Nome
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Nome completo'),
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Nome é obrigatório.' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Linha: CPF + Data de nascimento
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          decoration: const InputDecoration(labelText: 'CPF'),
-                          inputFormatters: [_cpfFormatter],
-                          validator: (v) =>
-                              v == null || v.length < 14 ? 'CPF inválido.' : null,
-                        ),
+        AppCard(
+          padding: const EdgeInsets.all(28),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppTextField(
+                  label: 'Nome completo',
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Nome é obrigatório.' : null,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'CPF',
+                        inputFormatters: [_cpfFormatter],
+                        validator: (v) => v == null || v.length < 14 ? 'CPF inválido.' : null,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Data de nascimento',
-                            hintText: 'DD/MM/AAAA',
-                          ),
-                          validator: (v) =>
-                              v == null || v.trim().isEmpty
-                                  ? 'Data é obrigatória.'
-                                  : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Telefone
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Telefone'),
-                    inputFormatters: [_phoneFormatter],
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Telefone é obrigatório.' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Endereço
-                  TextFormField(
-                    decoration: const InputDecoration(labelText: 'Endereço completo'),
-                    validator: (v) =>
-                        v == null || v.trim().isEmpty ? 'Endereço é obrigatório.' : null,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Linha: Dependentes + Renda
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Número de dependentes',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (v) =>
-                              v == null || v.trim().isEmpty
-                                  ? 'Número é obrigatório.'
-                                  : null,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          decoration: const InputDecoration(
-                            labelText: 'Renda familiar (R\$)',
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Observações
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Observações sociais',
-                      alignLabelWithHint: true,
                     ),
-                    maxLines: 4,
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Ações
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => context.pop(),
-                        child: const Text('Cancelar'),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Data de nascimento',
+                        hintText: 'DD/MM/AAAA',
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Data é obrigatória.' : null,
                       ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: _onSave,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.secondaryColor,
-                        ),
-                        child: Text(
-                          _isEditing ? 'Salvar alterações' : 'Cadastrar beneficiário',
-                          style: const TextStyle(color: Colors.white),
-                        ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'Telefone',
+                  inputFormatters: [_phoneFormatter],
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Telefone é obrigatório.' : null,
+                ),
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'Endereço completo',
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Endereço é obrigatório.' : null,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Número de dependentes',
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            v == null || v.trim().isEmpty ? 'Número é obrigatório.' : null,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                    const SizedBox(width: 16),
+                    const Expanded(
+                      child: AppTextField(
+                        label: 'Renda familiar (R\$)',
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const AppTextField(label: 'Observações sociais', maxLines: 4),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () => context.pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    const SizedBox(width: 12),
+                    GradientButton(
+                      label: _isEditing ? 'Salvar alterações' : 'Cadastrar beneficiário',
+                      onPressed: _onSave,
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/app_tokens.dart';
 
 class SidebarItem extends StatefulWidget {
   final IconData icon;
@@ -25,6 +27,7 @@ class _SidebarItemState extends State<SidebarItem> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     final isHighlighted = widget.isActive || _isHovered;
 
     return MouseRegion(
@@ -36,44 +39,55 @@ class _SidebarItemState extends State<SidebarItem> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: widget.isActive
-                ? AppColors.secondaryColor
-                : _isHovered
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            gradient: widget.isActive
+                ? LinearGradient(
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.20),
+                      AppColors.primary.withValues(alpha: 0.08),
+                    ],
+                  )
+                : null,
+            color: !widget.isActive && _isHovered
+                ? AppColors.primary.withValues(alpha: 0.10)
+                : null,
+            borderRadius: BorderRadius.circular(AppRadius.input),
           ),
-          child: Row(
+          child: Stack(
             children: [
-              Icon(
-                widget.icon,
-                color: isHighlighted ? Colors.white : Colors.white54,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  color: isHighlighted ? Colors.white : Colors.white70,
-                  fontWeight: widget.isActive
-                      ? FontWeight.w600
-                      : FontWeight.w400,
-                  fontSize: 14,
-                ),
-              ),
-              if (widget.isActive) ...[
-                const Spacer(),
-                Container(
-                  width: 4,
-                  height: 4,
-                  decoration: const BoxDecoration(
-                    color: AppColors.accentColor,
-                    shape: BoxShape.circle,
+              if (widget.isActive)
+                Positioned(
+                  left: 0,
+                  top: 4,
+                  bottom: 4,
+                  child: Container(
+                    width: 3,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.icon,
+                      color: isHighlighted ? AppColors.primary : tokens.textMuted,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.label,
+                      style: AppTextStyles.body.copyWith(
+                        color: isHighlighted ? tokens.text : tokens.textSecondary,
+                        fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Every private widget takes super.key by convention (forward-compat with
+    # Flutter's widget identity system), even when no current call site passes
+    # one explicitly — this diagnostic treats that as an error otherwise.
+    unused_element_parameter: ignore
