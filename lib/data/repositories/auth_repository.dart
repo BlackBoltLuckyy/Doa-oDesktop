@@ -30,7 +30,8 @@ class AuthRepository {
         ),
       ));
     }
-    return const Left('E-mail ou senha incorretos. Use admin@ong.com / admin123');
+    return const Left(
+        'E-mail ou senha incorretos. Use admin@ong.com / admin123');
   }
 
   Future<Either<String, String>> register({
