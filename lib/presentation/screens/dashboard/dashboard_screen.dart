@@ -157,10 +157,10 @@ class DashboardScreen extends StatelessWidget {
                       _HeaderCell('Data', flex: 1),
                     ],
                   ),
-                ),
+                ),  
 
                 // Linhas
-                ..._recentActivity.asMap().entries.map((entry) {
+                ..._recentActivity.asMap().entries.map((entry) {    
                   final i = entry.key;
                   final row = entry.value;
                   return Container(
