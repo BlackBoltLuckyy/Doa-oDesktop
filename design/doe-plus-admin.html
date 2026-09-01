@@ -1,0 +1,788 @@
+<title>Doe+ Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0f1e; --sidebar:#0b1120; --surface:#0e1526; --border:rgba(148,163,184,0.09);
+    --text:#e7ecf5; --text-sec:#8ea0bd; --th:#7688a6;
+    --accent-1:#6366f1; --accent-2:#7c3aed; --danger:#fb7185; --success:#34d399; --warning:#fbbf24;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;color-scheme:dark;}
+  body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;}
+  #root{min-height:100vh;background:var(--bg);}
+  ::selection{background:rgba(124,58,237,0.35);color:#fff;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.18);border-radius:999px;}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.3);}
+  input::placeholder{color:#5b6b85;}
+  input:focus,select:focus{outline:none;}
+  button{font-family:inherit;cursor:pointer;color:inherit;}
+  button:disabled{cursor:not-allowed;}
+  a{color:inherit;}
+  :focus-visible{outline:2px solid #a855f7;outline-offset:2px;}
+
+  .nav-link{transition:background .15s ease,border-color .15s ease,color .15s ease;}
+  .nav-link:hover:not(.active){background:rgba(148,163,184,0.06);color:var(--text);}
+  .icon-btn{transition:background .15s ease,border-color .15s ease,transform .1s ease;}
+  .icon-btn:hover{background:rgba(148,163,184,0.09);border-color:rgba(148,163,184,0.2);}
+  .icon-btn:active{transform:scale(0.94);}
+  .row-hover:hover{background:rgba(124,58,237,0.05) !important;}
+  .search-input:focus{border-color:#7c3aed !important;background:rgba(124,58,237,0.07) !important;}
+  .action-btn{transition:background .15s ease,opacity .15s ease,transform .1s ease;}
+  .action-btn:hover:not(:disabled){background:rgba(148,163,184,0.12);}
+  .action-btn:active:not(:disabled){transform:scale(0.92);}
+  .primary-btn{transition:filter .15s ease,transform .1s ease;}
+  .primary-btn:hover{filter:brightness(1.08);}
+  .primary-btn:active{transform:scale(0.98);}
+  .ghost-btn{transition:background .15s ease,border-color .15s ease;}
+  .ghost-btn:hover{background:rgba(148,163,184,0.08) !important;border-color:rgba(148,163,184,0.2) !important;}
+  .tab-pill{transition:background .15s ease,color .15s ease;}
+  .tab-pill:hover:not(.active){background:rgba(148,163,184,0.08);}
+  .page-pill{transition:background .15s ease,color .15s ease;}
+  .page-pill:hover:not(.active){background:rgba(148,163,184,0.08);}
+  .footer-link:hover{color:var(--text) !important;background:rgba(148,163,184,0.06) !important;}
+  .footer-logout:hover{background:rgba(251,113,133,0.1) !important;}
+  .select-btn{transition:border-color .15s ease,background .15s ease;}
+  .select-btn:hover:not(.selected){border-color:rgba(148,163,184,0.25) !important;background:rgba(148,163,184,0.04) !important;}
+  .check-item:hover{background:rgba(148,163,184,0.05);}
+  .stepper-btn:hover{background:rgba(148,163,184,0.14) !important;}
+  .link-btn:hover{text-decoration:underline;}
+  .modal-close:hover{background:rgba(148,163,184,0.1);}
+  @keyframes toastIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  @keyframes popIn{from{opacity:0;transform:scale(0.96) translateY(6px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  @media (prefers-reduced-motion: reduce){*{transition:none !important;animation:none !important;}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<div id="root"></div>
+<script>
+"use strict";
+const { useState, useMemo, useEffect, useRef } = React;
+const h = React.createElement;
+
+/* ---------------------------- tokens ---------------------------- */
+const T = {
+  bg:'#0a0f1e', sidebar:'#0b1120', surface:'#0e1526', border:'rgba(148,163,184,0.09)',
+  text:'#e7ecf5', textSec:'#8ea0bd', th:'#7688a6',
+  accent:'linear-gradient(135deg,#6366f1,#7c3aed)', accent1:'#6366f1', accent2:'#7c3aed',
+  logoGrad:'linear-gradient(135deg,#ec4899,#a855f7)',
+  danger:'#fb7185', success:'#34d399', warning:'#fbbf24', indigo:'#818cf8',
+};
+const PAGE_SIZE = 5;
+const CATEGORY_COLORS = {
+  'Roupas':'#818cf8','Alimentos':'#34d399','Calçados':'#fbbf24','Brinquedos':'#f472b6',
+  'Material escolar':'#38bdf8','Acessórios':'#c084fc','Móveis':'#fb923c','Outros':'#94a3b8'
+};
+const STATUS_COLORS = { 'Pendente':'#fbbf24','Aprovado':'#34d399','Recusado':'#fb7185','Em estoque':'#818cf8' };
+const AVATAR_COLORS = ['#6366f1','#ec4899','#f59e0b','#10b981','#38bdf8','#a855f7'];
+
+function hexToRgba(hex, a){
+  const c = hex.replace('#','');
+  const r = parseInt(c.substring(0,2),16), g = parseInt(c.substring(2,4),16), b = parseInt(c.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ---------------------------- mock data ---------------------------- */
+const initialInventory = [
+  { id:1, item:'Cobertor', categoria:'Roupas', qty:20, unidade:'un', entrada:'01/06/2026', origem:'Doação #100' },
+  { id:2, item:'Cesta básica', categoria:'Alimentos', qty:15, unidade:'cesta', entrada:'02/06/2026', origem:'Doação #101' },
+  { id:3, item:'Casaco', categoria:'Roupas', qty:30, unidade:'un', entrada:'03/06/2026', origem:'Doação #102' },
+  { id:4, item:'Calçado', categoria:'Calçados', qty:12, unidade:'par', entrada:'04/06/2026', origem:'Doação #103' },
+  { id:5, item:'Brinquedo', categoria:'Brinquedos', qty:8, unidade:'un', entrada:'05/06/2026', origem:'Doação #104' },
+  { id:6, item:'Caderno', categoria:'Material escolar', qty:50, unidade:'un', entrada:'06/06/2026', origem:'Doação #105' },
+  { id:7, item:'Caneta', categoria:'Material escolar', qty:100, unidade:'un', entrada:'07/06/2026', origem:'Doação #106' },
+  { id:8, item:'Mochila', categoria:'Acessórios', qty:6, unidade:'un', entrada:'08/06/2026', origem:'Doação #107' },
+];
+const CATS_CYCLE = ['Roupas','Alimentos','Móveis','Outros'];
+const STATUS_CYCLE = ['Pendente','Aprovado','Recusado','Em estoque'];
+const initialDonations = Array.from({length:8}, (_,i) => ({
+  id:i+1, doador:`Doador ${i+1}`, item:`Item ${i+1}`,
+  categoria:CATS_CYCLE[i%4], status:STATUS_CYCLE[i%4],
+  data:`0${i+1}/06/2026`,
+}));
+const initialBeneficiaries = [
+  { id:1, nome:'Maria Silva', cpf:'111.222.333-11', telefone:'(11) 91000-0000', dependentes:3, ultima:'01/05/2026' },
+  { id:2, nome:'João Costa', cpf:'222.444.666-22', telefone:'(11) 92000-0001', dependentes:1, ultima:'04/05/2026' },
+  { id:3, nome:'Ana Souza', cpf:'333.666.999-33', telefone:'(11) 93000-0002', dependentes:4, ultima:'07/05/2026' },
+  { id:4, nome:'Pedro Alves', cpf:'444.888.132-44', telefone:'(11) 94000-0003', dependentes:2, ultima:'10/05/2026' },
+  { id:5, nome:'Carla Lima', cpf:'555.111.166-55', telefone:'(11) 95000-0004', dependentes:5, ultima:'13/05/2026' },
+  { id:6, nome:'Roberto Nunes', cpf:'666.133.199-66', telefone:'(11) 96000-0005', dependentes:0, ultima:'16/05/2026' },
+  { id:7, nome:'Lucia Santos', cpf:'777.155.233-77', telefone:'(11) 97000-0006', dependentes:3, ultima:'19/05/2026' },
+];
+
+/* ---------------------------- icons ---------------------------- */
+const ICONS = {
+  grid: [ h('rect',{key:1,x:3,y:3,width:7,height:7,rx:1.5}), h('rect',{key:2,x:14,y:3,width:7,height:7,rx:1.5}), h('rect',{key:3,x:3,y:14,width:7,height:7,rx:1.5}), h('rect',{key:4,x:14,y:14,width:7,height:7,rx:1.5}) ],
+  heart: [ h('path',{key:1,d:'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z'}) ],
+  package: [ h('path',{key:1,d:'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'}), h('polyline',{key:2,points:'3.27 6.96 12 12.01 20.73 6.96'}), h('line',{key:3,x1:12,y1:22.08,x2:12,y2:12}) ],
+  users: [ h('path',{key:1,d:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2'}), h('circle',{key:2,cx:9,cy:7,r:4}), h('path',{key:3,d:'M23 21v-2a4 4 0 0 0-3-3.87'}), h('path',{key:4,d:'M16 3.13a4 4 0 0 1 0 7.75'}) ],
+  truck: [ h('rect',{key:1,x:1,y:3,width:15,height:13,rx:1}), h('polygon',{key:2,points:'16 8 20 8 23 11 23 16 16 16 16 8'}), h('circle',{key:3,cx:5.5,cy:18.5,r:2.5}), h('circle',{key:4,cx:18.5,cy:18.5,r:2.5}) ],
+  settings: [ h('circle',{key:1,cx:12,cy:12,r:3}), h('path',{key:2,d:'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'}) ],
+  logout: [ h('path',{key:1,d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('polyline',{key:2,points:'16 17 21 12 16 7'}), h('line',{key:3,x1:21,y1:12,x2:9,y2:12}) ],
+  sun: [ h('circle',{key:0,cx:12,cy:12,r:5}), ...[0,45,90,135,180,225,270,315].map((deg,i)=>h('line',{key:'r'+i,x1:12+Math.cos(deg*Math.PI/180)*7,y1:12+Math.sin(deg*Math.PI/180)*7,x2:12+Math.cos(deg*Math.PI/180)*9.5,y2:12+Math.sin(deg*Math.PI/180)*9.5})) ],
+  bell: [ h('path',{key:1,d:'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'}), h('path',{key:2,d:'M13.73 21a2 2 0 0 1-3.46 0'}) ],
+  search: [ h('circle',{key:1,cx:11,cy:11,r:8}), h('line',{key:2,x1:21,y1:21,x2:16.65,y2:16.65}) ],
+  eye: [ h('path',{key:1,d:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'}), h('circle',{key:2,cx:12,cy:12,r:3}) ],
+  check: [ h('polyline',{key:1,points:'20 6 9 17 4 12'}) ],
+  x: [ h('line',{key:1,x1:18,y1:6,x2:6,y2:18}), h('line',{key:2,x1:6,y1:6,x2:18,y2:18}) ],
+  edit: [ h('path',{key:1,d:'M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'}) ],
+  trash: [ h('polyline',{key:1,points:'3 6 5 6 21 6'}), h('path',{key:2,d:'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'}), h('line',{key:3,x1:10,y1:11,x2:10,y2:17}), h('line',{key:4,x1:14,y1:11,x2:14,y2:17}) ],
+  alert: [ h('path',{key:1,d:'M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'}), h('line',{key:2,x1:12,y1:9,x2:12,y2:13}), h('line',{key:3,x1:12,y1:17,x2:12.01,y2:17}) ],
+  plus: [ h('line',{key:1,x1:12,y1:5,x2:12,y2:19}), h('line',{key:2,x1:5,y1:12,x2:19,y2:12}) ],
+  chevronLeft: [ h('polyline',{key:1,points:'15 18 9 12 15 6'}) ],
+  chevronRight: [ h('polyline',{key:1,points:'9 18 15 12 9 6'}) ],
+  trendUp: [ h('polyline',{key:1,points:'23 6 13.5 15.5 8.5 10.5 1 18'}), h('polyline',{key:2,points:'17 6 23 6 23 12'}) ],
+  trendDown: [ h('polyline',{key:1,points:'23 18 13.5 8.5 8.5 13.5 1 6'}), h('polyline',{key:2,points:'17 18 23 18 23 12'}) ],
+  clock: [ h('circle',{key:1,cx:12,cy:12,r:10}), h('polyline',{key:2,points:'12 6 12 12 16 14'}) ],
+  boxes: [ h('path',{key:1,d:'M2.97 12.92 12 18l9.03-5.08'}), h('path',{key:2,d:'M2.97 8.08 12 3l9.03 5.08L12 13.15 2.97 8.08z'}), h('path',{key:3,d:'M12 22V13.15'}) ],
+};
+function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 2, style }) {
+  return h('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:color, strokeWidth, strokeLinecap:'round', strokeLinejoin:'round', style }, ICONS[name] || []);
+}
+
+/* ---------------------------- small ui pieces ---------------------------- */
+function Pill({ color, label, dot=true }) {
+  return h('span', { style:{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', borderRadius:999, fontSize:12.5, fontWeight:600, background:hexToRgba(color,0.12), border:`1px solid ${hexToRgba(color,0.28)}`, color, whiteSpace:'nowrap' } },
+    dot && h('span', { style:{ width:6, height:6, borderRadius:999, background:color, flexShrink:0 } }),
+    label
+  );
+}
+function CategoryPill({ categoria }) { return h(Pill, { color: CATEGORY_COLORS[categoria] || CATEGORY_COLORS.Outros, label: categoria }); }
+function StatusPill({ status }) { return h(Pill, { color: STATUS_COLORS[status] || T.textSec, label: status }); }
+
+function Avatar({ label, colorIndex = 0, size = 34, square = false }) {
+  const color = AVATAR_COLORS[colorIndex % AVATAR_COLORS.length];
+  return h('div', { style:{
+    width:size, height:size, borderRadius: square ? size*0.32 : '50%', flexShrink:0,
+    background: hexToRgba(color, 0.18), border:`1px solid ${hexToRgba(color,0.4)}`, color,
+    display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:size*0.4,
+  } }, (label || '?').trim().charAt(0).toUpperCase());
+}
+
+function SearchInput({ value, onChange, placeholder }) {
+  return h('div', { style:{ position:'relative', maxWidth:360, width:'100%' } },
+    h(Icon, { name:'search', size:16, color:T.textSec, style:{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' } }),
+    h('input', {
+      className:'search-input', value, placeholder, onChange:e=>onChange(e.target.value),
+      style:{ width:'100%', height:40, borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontSize:14, padding:'0 14px 0 38px', fontFamily:'inherit', transition:'border-color .15s ease, background .15s ease' }
+    })
+  );
+}
+
+function IconButton({ name, onClick, title, size=40, danger=false, disabled=false, iconSize=18 }) {
+  return h('button', {
+    className:'icon-btn', onClick, title, disabled,
+    style:{ width:size, height:size, borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)',
+      display:'flex', alignItems:'center', justifyContent:'center', color: danger ? T.danger : T.textSec, opacity: disabled ? 0.35 : 1 }
+  }, h(Icon, { name, size:iconSize }));
+}
+
+function PrimaryButton({ label, onClick, icon, disabled=false, full=false }) {
+  return h('button', {
+    className:'primary-btn', onClick, disabled,
+    style:{ height:42, padding:'0 18px', borderRadius:13, border:'none', background: disabled ? 'rgba(148,163,184,0.15)' : T.accent,
+      color: disabled ? T.textSec : '#fff', fontWeight:700, fontSize:14, display:'inline-flex', alignItems:'center', justifyContent:'center', gap:8,
+      width: full ? '100%' : undefined, opacity: disabled ? 0.6 : 1 }
+  }, icon && h(Icon, { name:icon, size:16 }), label);
+}
+
+function GhostButton({ label, onClick, icon }) {
+  return h('button', { className:'ghost-btn', onClick,
+    style:{ height:38, padding:'0 14px', borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.textSec, fontWeight:600, fontSize:13.5, display:'inline-flex', alignItems:'center', gap:8 }
+  }, icon && h(Icon, { name:icon, size:15 }), label);
+}
+
+function Card({ children, style, sticky=false }) {
+  return h('div', { style:{ background:T.surface, border:`1px solid ${T.border}`, borderRadius:20, padding:22, ...(sticky?{position:'sticky', top:92}:{}) , ...style } }, children);
+}
+
+function Pagination({ page, setPage, total, pageSize }) {
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(total, page * pageSize);
+  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  return h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:18, flexWrap:'wrap', gap:12 } },
+    h('span', { style:{ fontSize:13.5, color:T.textSec } }, `Mostrando ${start}–${end} de ${total}`),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:6 } },
+      h('button', { className:'page-pill', disabled: page===1, onClick:()=>setPage(p=>Math.max(1,p-1)),
+        style:{ width:32, height:32, borderRadius:999, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center', opacity: page===1?0.4:1 } }, h(Icon,{name:'chevronLeft',size:15})),
+      pages.map(p => h('button', {
+        key:p, className: 'page-pill' + (p===page?' active':''), onClick:()=>setPage(p),
+        style:{ width:32, height:32, borderRadius:999, border: p===page ? 'none' : `1px solid ${T.border}`, background: p===page ? T.accent : 'transparent', color: p===page ? '#fff' : T.textSec, fontWeight:700, fontSize:13 }
+      }, p)),
+      h('button', { className:'page-pill', disabled: page===totalPages, onClick:()=>setPage(p=>Math.min(totalPages,p+1)),
+        style:{ width:32, height:32, borderRadius:999, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center', opacity: page===totalPages?0.4:1 } }, h(Icon,{name:'chevronRight',size:15})),
+    )
+  );
+}
+
+function usePage(deps) {
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, deps);
+  return [page, setPage];
+}
+
+function Th({ children, align }) {
+  return h('th', { style:{ textAlign: align||'left', fontSize:11.5, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:T.th, padding:'0 16px 12px', whiteSpace:'nowrap' } }, children);
+}
+function Td({ children, align, style }) {
+  return h('td', { style:{ textAlign: align||'left', fontSize:14, color:T.text, padding:'14px 16px', borderTop:`1px solid ${T.border}`, ...style } }, children);
+}
+
+function Modal({ title, onClose, children, wide=false }) {
+  return h('div', {
+    onClick:onClose,
+    style:{ position:'fixed', inset:0, background:'rgba(5,8,16,0.6)', backdropFilter:'blur(3px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100, padding:20, animation:'fadeIn .15s ease' }
+  },
+    h('div', { onClick:e=>e.stopPropagation(),
+      style:{ width:'100%', maxWidth: wide?560:440, background:T.surface, border:`1px solid ${T.border}`, borderRadius:20, padding:24, animation:'popIn .18s ease', maxHeight:'86vh', overflowY:'auto' } },
+      h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 } },
+        h('h3', { style:{ fontSize:18, fontWeight:800 } }, title),
+        h('button', { className:'modal-close', onClick:onClose, style:{ width:32, height:32, borderRadius:10, border:'none', background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'x',size:17}))
+      ),
+      children
+    )
+  );
+}
+
+function Field({ label, children }) {
+  return h('label', { style:{ display:'flex', flexDirection:'column', gap:6, fontSize:13, color:T.textSec, fontWeight:600 } }, label, children);
+}
+const fieldInputStyle = { height:42, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontSize:14, padding:'0 12px', fontFamily:'inherit' };
+
+function Toast({ text, onDone }) {
+  useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, []);
+  return h('div', { style:{
+    position:'fixed', top:24, left:'50%', transform:'translateX(-50%)', zIndex:200,
+    background:'rgba(16,24,42,0.95)', border:`1px solid ${hexToRgba(T.success,0.35)}`, color:T.text,
+    padding:'12px 20px', borderRadius:14, display:'flex', alignItems:'center', gap:10, fontSize:14, fontWeight:600,
+    boxShadow:'0 12px 30px rgba(0,0,0,0.4)', animation:'toastIn .2s ease',
+  } },
+    h('div', { style:{ width:24, height:24, borderRadius:'50%', background:hexToRgba(T.success,0.18), display:'flex', alignItems:'center', justifyContent:'center', color:T.success, flexShrink:0 } }, h(Icon,{name:'check',size:14})),
+    text
+  );
+}
+
+/* ---------------------------- sidebar / header ---------------------------- */
+const NAV_ITEMS = [
+  { key:'dashboard', label:'Dashboard', icon:'grid' },
+  { key:'donations', label:'Doações', icon:'heart' },
+  { key:'inventory', label:'Estoque', icon:'package' },
+  { key:'beneficiaries', label:'Beneficiários', icon:'users' },
+  { key:'distributions', label:'Distribuições', icon:'truck' },
+];
+
+function Sidebar({ screen, setScreen }) {
+  return h('aside', { style:{ width:264, flexShrink:0, background:T.sidebar, borderRight:`1px solid ${T.border}`, display:'flex', flexDirection:'column', position:'sticky', top:0, height:'100vh' } },
+    h('div', { style:{ display:'flex', alignItems:'center', gap:11, padding:'24px 22px 20px' } },
+      h('div', { style:{ width:40, height:40, borderRadius:13, background:T.logoGrad, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, h(Icon,{ name:'heart', size:19, color:'#fff', strokeWidth:2.4 })),
+      h('div', { style:{ fontSize:19, fontWeight:800, letterSpacing:'-0.01em' } }, 'Doe', h('span',{style:{color:'#a855f7'}},'+'))
+    ),
+    h('div', { style:{ margin:'0 18px 16px', padding:12, borderRadius:14, background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`, display:'flex', alignItems:'center', gap:10 } },
+      h('div', { style:{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#6366f1,#a855f7)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:14, color:'#fff', flexShrink:0 } }, 'A'),
+      h('div', { style:{ minWidth:0 } },
+        h('div', { style:{ fontSize:13.5, fontWeight:700, color:T.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, 'Administrador'),
+        h('div', { style:{ fontSize:10.5, fontWeight:700, color:T.textSec, letterSpacing:'0.08em' } }, 'ADMIN')
+      )
+    ),
+    h('div', { style:{ height:1, background:T.border, margin:'0 18px 14px' } }),
+    h('nav', { style:{ display:'flex', flexDirection:'column', gap:4, padding:'0 14px' } },
+      NAV_ITEMS.map(item => {
+        const active = screen === item.key;
+        return h('button', {
+          key:item.key, onClick:()=>setScreen(item.key), className:'nav-link' + (active?' active':''),
+          style:{
+            display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:13, border:'1px solid transparent',
+            background: active ? 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(124,58,237,0.18))' : 'transparent',
+            borderColor: active ? 'rgba(168,85,247,0.35)' : 'transparent',
+            color: active ? T.text : T.textSec, fontSize:14.5, fontWeight:600, textAlign:'left', width:'100%',
+          }
+        }, h(Icon,{ name:item.icon, size:17, color: active ? '#c4b5fd' : T.textSec }), item.label);
+      })
+    ),
+    h('div', { style:{ marginTop:'auto', padding:'14px 14px 18px', borderTop:`1px solid ${T.border}`, display:'flex', flexDirection:'column', gap:2 } },
+      h('button', { className:'footer-link', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:12, border:'none', background:'transparent', color:T.textSec, fontSize:14, fontWeight:600, textAlign:'left' } }, h(Icon,{name:'settings',size:16}), 'Configurações'),
+      h('button', { className:'footer-logout', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:12, border:'none', background:'transparent', color:T.danger, fontSize:14, fontWeight:600, textAlign:'left' } }, h(Icon,{name:'logout',size:16}), 'Sair'),
+    )
+  );
+}
+
+function Header({ screen }) {
+  const label = NAV_ITEMS.find(n => n.key === screen)?.label || '';
+  return h('header', { style:{ position:'sticky', top:0, zIndex:20, height:72, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 34px', background:'rgba(10,15,30,0.78)', backdropFilter:'blur(10px)', borderBottom:`1px solid ${T.border}` } },
+    h('div', { style:{ fontSize:15, fontWeight:700, color:T.text } }, label),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:10 } },
+      h(IconButton, { name:'sun', title:'Alternar tema' }),
+      h('div', { style:{ position:'relative' } },
+        h(IconButton, { name:'bell', title:'Notificações' }),
+        h('span', { style:{ position:'absolute', top:6, right:6, width:8, height:8, borderRadius:'50%', background:T.danger, border:'2px solid #0a0f1e' } })
+      )
+    )
+  );
+}
+
+function PageTitle({ title, subtitle }) {
+  return h('div', { style:{ marginBottom:28 } },
+    h('h1', { style:{ fontSize:30, fontWeight:800, letterSpacing:'-0.01em', marginBottom:6 } }, title),
+    h('p', { style:{ fontSize:14.5, color:T.textSec } }, subtitle)
+  );
+}
+
+/* ---------------------------- Dashboard ---------------------------- */
+function MetricCard({ icon, iconColor, label, value, trend, trendIcon }) {
+  return h(Card, { style:{ display:'flex', flexDirection:'column', gap:14 } },
+    h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between' } },
+      h('div', { style:{ width:42, height:42, borderRadius:13, background:hexToRgba(iconColor,0.15), display:'flex', alignItems:'center', justifyContent:'center', color:iconColor } }, h(Icon,{name:icon,size:20})),
+      h('span', { style:{ display:'inline-flex', alignItems:'center', gap:4, padding:'3px 8px', borderRadius:999, fontSize:11.5, fontWeight:700, background:hexToRgba(iconColor,0.12), color:iconColor } }, h(Icon,{name:trendIcon,size:11}), trend)
+    ),
+    h('div', { style:{ fontSize:30, fontWeight:800, letterSpacing:'-0.01em' } }, value),
+    h('div', { style:{ fontSize:13.5, color:T.textSec, fontWeight:600 } }, label)
+  );
+}
+
+function Dashboard({ donations, inventory, beneficiaries, setScreen }) {
+  const pending = donations.filter(d => d.status === 'Pendente').length;
+  const totalStock = inventory.reduce((s,i) => s + i.qty, 0);
+  const lowStock = inventory.filter(i => i.qty <= 10);
+  const recent = donations.slice(0, 4);
+
+  return h(React.Fragment, null,
+    h(PageTitle, { title:'Dashboard', subtitle:'Visão geral das doações, estoque e beneficiários da ONG.' }),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(4, minmax(0,1fr))', gap:20, marginBottom:24 } },
+      h(MetricCard, { icon:'clock', iconColor:T.warning, label:'Doações pendentes', value:pending, trend:`+${pending} novas`, trendIcon:'trendUp' }),
+      h(MetricCard, { icon:'boxes', iconColor:T.accent1, label:'Itens em estoque', value:totalStock, trend:'+8%', trendIcon:'trendUp' }),
+      h(MetricCard, { icon:'users', iconColor:T.success, label:'Beneficiários ativos', value:beneficiaries.length, trend:'+1 novo', trendIcon:'trendUp' }),
+      h(MetricCard, { icon:'alert', iconColor:T.danger, label:'Estoque baixo', value:lowStock.length, trend:'atenção', trendIcon:'trendDown' }),
+    ),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 } },
+      h(Card, null,
+        h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 } },
+          h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Doações recentes'),
+          h('button', { className:'link-btn', onClick:()=>setScreen('donations'), style:{ background:'none', border:'none', color:'#a78bfa', fontSize:13, fontWeight:700 } }, 'Ver todas →')
+        ),
+        h('div', { style:{ display:'flex', flexDirection:'column', gap:4 } },
+          recent.map((d,i) => h('div', { key:d.id, className:'row-hover', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 8px', borderRadius:12 } },
+            h(Avatar, { label:d.doador, colorIndex:i }),
+            h('div', { style:{ flex:1, minWidth:0 } },
+              h('div', { style:{ fontSize:14, fontWeight:700, color:T.text } }, d.doador),
+              h('div', { style:{ fontSize:12.5, color:T.textSec } }, `${d.item} · ${d.categoria}`)
+            ),
+            h(StatusPill, { status:d.status })
+          ))
+        )
+      ),
+      h(Card, null,
+        h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 } },
+          h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Alertas de estoque baixo'),
+          h('button', { className:'link-btn', onClick:()=>setScreen('inventory'), style:{ background:'none', border:'none', color:'#a78bfa', fontSize:13, fontWeight:700 } }, 'Gerenciar estoque →')
+        ),
+        lowStock.length === 0
+          ? h('p', { style:{ fontSize:13.5, color:T.textSec } }, 'Nenhum item com estoque baixo.')
+          : h('div', { style:{ display:'flex', flexDirection:'column', gap:4 } },
+              lowStock.map(item => h('div', { key:item.id, className:'row-hover', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 8px', borderRadius:12 } },
+                h('div', { style:{ width:34, height:34, borderRadius:11, background:hexToRgba(T.danger,0.14), display:'flex', alignItems:'center', justifyContent:'center', color:T.danger, flexShrink:0 } }, h(Icon,{name:'alert',size:16})),
+                h('div', { style:{ flex:1, minWidth:0 } },
+                  h('div', { style:{ fontSize:14, fontWeight:700, color:T.text } }, item.item),
+                  h('div', { style:{ fontSize:12.5, color:T.textSec } }, item.categoria)
+                ),
+                h('div', { style:{ fontSize:15, fontWeight:800, color:T.danger } }, `${item.qty} ${item.unidade}`)
+              ))
+            )
+      )
+    )
+  );
+}
+
+/* ---------------------------- Doações ---------------------------- */
+const DONATION_TABS = [
+  { key:'Todos', label:'Todos' }, { key:'Pendente', label:'Pendentes' },
+  { key:'Aprovado', label:'Aprovados' }, { key:'Recusado', label:'Recusados' }, { key:'Em estoque', label:'Em estoque' },
+];
+function Donations({ donations, setDonations }) {
+  const [tab, setTab] = useState('Todos');
+  const [q, setQ] = useState('');
+  const filtered = useMemo(() => donations.filter(d => (tab==='Todos' || d.status===tab) &&
+    (d.doador.toLowerCase().includes(q.toLowerCase()) || d.item.toLowerCase().includes(q.toLowerCase()) || d.categoria.toLowerCase().includes(q.toLowerCase()))
+  ), [donations, tab, q]);
+  const [page, setPage] = usePage([tab, q]);
+  const pageItems = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+  const setStatus = (id, status) => setDonations(list => list.map(d => d.id===id ? { ...d, status } : d));
+
+  return h(React.Fragment, null,
+    h(PageTitle, { title:'Triagem de doações', subtitle:'Avalie, aprove ou recuse as doações recebidas.' }),
+    h('div', { style:{ display:'flex', gap:8, marginBottom:18, flexWrap:'wrap' } },
+      DONATION_TABS.map(t => {
+        const count = t.key==='Todos' ? donations.length : donations.filter(d=>d.status===t.key).length;
+        const active = tab === t.key;
+        return h('button', { key:t.key, className:'tab-pill'+(active?' active':''), onClick:()=>setTab(t.key),
+          style:{ padding:'9px 16px', borderRadius:999, border:'none', fontSize:13.5, fontWeight:700, display:'flex', alignItems:'center', gap:8,
+            background: active ? T.accent : 'rgba(255,255,255,0.02)', color: active ? '#fff' : T.textSec, border: active?'none':`1px solid ${T.border}` }
+        }, t.label, h('span', { style:{ fontSize:11.5, padding:'1px 7px', borderRadius:999, background: active?'rgba(255,255,255,0.22)':'rgba(148,163,184,0.14)' } }, count));
+      })
+    ),
+    h(Card, null,
+      h('div', { style:{ marginBottom:18 } }, h(SearchInput, { value:q, onChange:setQ, placeholder:'Buscar por doador, item ou categoria...' })),
+      h('div', { className:'table-scroll', style:{ overflowX:'auto' } },
+        h('table', { style:{ width:'100%', borderCollapse:'collapse', minWidth:760 } },
+          h('thead', null, h('tr', null, h(Th,null,'#'), h(Th,null,'Doador'), h(Th,null,'Item'), h(Th,null,'Categoria'), h(Th,null,'Status'), h(Th,null,'Data'), h(Th,{align:'right'},'Ações'))),
+          h('tbody', null,
+            pageItems.length === 0
+              ? h('tr', null, h('td', { colSpan:7, style:{ padding:'28px 16px', textAlign:'center', color:T.textSec, fontSize:14, borderTop:`1px solid ${T.border}` } }, 'Nenhuma doação encontrada.'))
+              : pageItems.map((d,i) => h('tr', { key:d.id, className:'row-hover' },
+                  h(Td, null, d.id),
+                  h(Td, null, h('div', { style:{ display:'flex', alignItems:'center', gap:10 } }, h(Avatar,{label:d.doador,colorIndex:i,size:28}), d.doador)),
+                  h(Td, null, d.item),
+                  h(Td, null, h(CategoryPill, { categoria:d.categoria })),
+                  h(Td, null, h(StatusPill, { status:d.status })),
+                  h(Td, null, d.data),
+                  h(Td, { align:'right' }, h('div', { style:{ display:'flex', gap:6, justifyContent:'flex-end' } },
+                    h('button', { className:'action-btn', title:'Ver detalhes', style:{ width:32, height:32, borderRadius:10, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'eye',size:15})),
+                    h('button', { className:'action-btn', disabled: d.status!=='Pendente', onClick:()=>setStatus(d.id,'Aprovado'), title:'Aprovar',
+                      style:{ width:32, height:32, borderRadius:10, border:`1px solid ${hexToRgba(T.success,0.3)}`, background:'transparent', color:T.success, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'check',size:15})),
+                    h('button', { className:'action-btn', disabled: d.status!=='Pendente', onClick:()=>setStatus(d.id,'Recusado'), title:'Recusar',
+                      style:{ width:32, height:32, borderRadius:10, border:`1px solid ${hexToRgba(T.danger,0.3)}`, background:'transparent', color:T.danger, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'x',size:15})),
+                  ))
+                ))
+          )
+        )
+      ),
+      h(Pagination, { page, setPage, total:filtered.length, pageSize:PAGE_SIZE })
+    )
+  );
+}
+
+/* ---------------------------- Estoque ---------------------------- */
+function InventoryForm({ initial, onSave, onClose }) {
+  const [form, setForm] = useState(initial || { item:'', categoria:'Roupas', qty:'', unidade:'un', origem:'' });
+  const set = (k,v) => setForm(f => ({ ...f, [k]: v }));
+  const valid = form.item.trim() && form.qty !== '' && Number(form.qty) >= 0 && form.unidade.trim();
+  return h(Modal, { title: initial ? 'Editar item' : 'Nova entrada de estoque', onClose },
+    h('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
+      h(Field, { label:'Item' }, h('input', { style:fieldInputStyle, value:form.item, onChange:e=>set('item',e.target.value), placeholder:'Ex: Cobertor' })),
+      h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
+        h(Field, { label:'Categoria' }, h('select', { style:fieldInputStyle, value:form.categoria, onChange:e=>set('categoria',e.target.value) },
+          Object.keys(CATEGORY_COLORS).map(c => h('option',{key:c,value:c},c)))),
+        h(Field, { label:'Unidade' }, h('input', { style:fieldInputStyle, value:form.unidade, onChange:e=>set('unidade',e.target.value), placeholder:'un, par, cesta...' })),
+      ),
+      h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
+        h(Field, { label:'Quantidade' }, h('input', { type:'number', min:0, style:fieldInputStyle, value:form.qty, onChange:e=>set('qty',e.target.value) })),
+        h(Field, { label:'Origem' }, h('input', { style:fieldInputStyle, value:form.origem, onChange:e=>set('origem',e.target.value), placeholder:'Doação #...' })),
+      ),
+      h(PrimaryButton, { label: initial ? 'Salvar alterações' : 'Adicionar item', disabled: !valid, full:true,
+        onClick: () => valid && onSave({ ...form, qty:Number(form.qty) }) })
+    )
+  );
+}
+
+function Inventory({ inventory, setInventory }) {
+  const [q, setQ] = useState('');
+  const [modal, setModal] = useState(null); // null | 'new' | item
+  const [toast, setToast] = useState('');
+  const filtered = useMemo(() => inventory.filter(i =>
+    i.item.toLowerCase().includes(q.toLowerCase()) || i.categoria.toLowerCase().includes(q.toLowerCase()) || i.origem.toLowerCase().includes(q.toLowerCase())
+  ), [inventory, q]);
+  const [page, setPage] = usePage([q]);
+  const pageItems = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+  const categorias = new Set(inventory.map(i => i.categoria)).size;
+  const lowStock = inventory.filter(i => i.qty <= 10).length;
+
+  const todayLabel = () => '09/06/2026';
+
+  return h(React.Fragment, null,
+    h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20, marginBottom:0 } },
+      h(PageTitle, { title:'Gestão de estoque', subtitle:'Acompanhe as quantidades disponíveis e a origem de cada item.' }),
+      h(PrimaryButton, { label:'Nova entrada', icon:'plus', onClick:()=>setModal('new') })
+    ),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:20, marginBottom:24 } },
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Itens cadastrados'), h('div',{style:{fontSize:26,fontWeight:800}},inventory.length)),
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Categorias'), h('div',{style:{fontSize:26,fontWeight:800}},categorias)),
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Estoque baixo'), h('div',{style:{fontSize:26,fontWeight:800,color:lowStock>0?T.danger:T.text}},lowStock)),
+    ),
+    h(Card, null,
+      h('div', { style:{ marginBottom:18 } }, h(SearchInput, { value:q, onChange:setQ, placeholder:'Buscar por item, categoria ou origem...' })),
+      h('div', { className:'table-scroll', style:{ overflowX:'auto' } },
+        h('table', { style:{ width:'100%', borderCollapse:'collapse', minWidth:820 } },
+          h('thead', null, h('tr', null, h(Th,null,'#'), h(Th,null,'Item'), h(Th,null,'Categoria'), h(Th,null,'Quantidade'), h(Th,null,'Unidade'), h(Th,null,'Entrada'), h(Th,null,'Origem'), h(Th,{align:'right'},'Ações'))),
+          h('tbody', null,
+            pageItems.length === 0
+              ? h('tr', null, h('td', { colSpan:8, style:{ padding:'28px 16px', textAlign:'center', color:T.textSec, fontSize:14, borderTop:`1px solid ${T.border}` } }, 'Nenhum item encontrado.'))
+              : pageItems.map(item => {
+                  const low = item.qty <= 10;
+                  return h('tr', { key:item.id, className:'row-hover' },
+                    h(Td, null, item.id),
+                    h(Td, null, item.item),
+                    h(Td, null, h(CategoryPill, { categoria:item.categoria })),
+                    h(Td, null, h('div', { style:{ display:'flex', alignItems:'center', gap:8 } },
+                      h('span', { style:{ fontWeight:800, color: low ? T.danger : T.text } }, item.qty),
+                      low && h('span', { style:{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 9px 3px 7px', borderRadius:999, fontSize:11.5, fontWeight:700, background:hexToRgba(T.danger,0.12), border:`1px solid ${hexToRgba(T.danger,0.28)}`, color:T.danger } }, h(Icon,{name:'alert',size:11}), 'BAIXO'))
+                    ),
+                    h(Td, null, item.unidade),
+                    h(Td, null, item.entrada),
+                    h(Td, null, item.origem),
+                    h(Td, { align:'right' }, h('div', { style:{ display:'flex', justifyContent:'flex-end' } },
+                      h('button', { className:'action-btn', title:'Editar', onClick:()=>setModal(item),
+                        style:{ width:32, height:32, borderRadius:10, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'edit',size:14})),
+                    ))
+                  );
+                })
+          )
+        )
+      ),
+      h(Pagination, { page, setPage, total:filtered.length, pageSize:PAGE_SIZE })
+    ),
+    modal && h(InventoryForm, {
+      initial: modal === 'new' ? null : modal,
+      onClose: () => setModal(null),
+      onSave: (data) => {
+        if (modal === 'new') {
+          const nextId = Math.max(0, ...inventory.map(i=>i.id)) + 1;
+          setInventory(list => [...list, { id:nextId, entrada: todayLabel(), origem: data.origem || 'Cadastro manual', ...data }]);
+          setToast('Item adicionado ao estoque!');
+        } else {
+          setInventory(list => list.map(i => i.id === modal.id ? { ...i, ...data } : i));
+          setToast('Item atualizado!');
+        }
+        setModal(null);
+      }
+    }),
+    toast && h(Toast, { text: toast, onDone: () => setToast('') })
+  );
+}
+
+/* ---------------------------- Beneficiários ---------------------------- */
+function BeneficiaryForm({ initial, onSave, onClose }) {
+  const [form, setForm] = useState(initial || { nome:'', cpf:'', telefone:'', dependentes:'' });
+  const set = (k,v) => setForm(f => ({ ...f, [k]: v }));
+  const valid = form.nome.trim() && form.cpf.trim() && form.telefone.trim() && form.dependentes !== '';
+  return h(Modal, { title: initial ? 'Editar beneficiário' : 'Novo beneficiário', onClose },
+    h('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
+      h(Field, { label:'Nome completo' }, h('input', { style:fieldInputStyle, value:form.nome, onChange:e=>set('nome',e.target.value), placeholder:'Ex: Maria Silva' })),
+      h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
+        h(Field, { label:'CPF' }, h('input', { style:fieldInputStyle, value:form.cpf, onChange:e=>set('cpf',e.target.value), placeholder:'000.000.000-00' })),
+        h(Field, { label:'Telefone' }, h('input', { style:fieldInputStyle, value:form.telefone, onChange:e=>set('telefone',e.target.value), placeholder:'(11) 90000-0000' })),
+      ),
+      h(Field, { label:'Dependentes' }, h('input', { type:'number', min:0, style:fieldInputStyle, value:form.dependentes, onChange:e=>set('dependentes',e.target.value) })),
+      h(PrimaryButton, { label: initial ? 'Salvar alterações' : 'Cadastrar beneficiário', disabled: !valid, full:true,
+        onClick: () => valid && onSave({ ...form, dependentes:Number(form.dependentes) }) })
+    )
+  );
+}
+
+function Beneficiaries({ beneficiaries, setBeneficiaries }) {
+  const [q, setQ] = useState('');
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState('');
+  const filtered = useMemo(() => beneficiaries.filter(b =>
+    b.nome.toLowerCase().includes(q.toLowerCase()) || b.cpf.includes(q) || b.telefone.includes(q)
+  ), [beneficiaries, q]);
+  const [page, setPage] = usePage([q]);
+  const pageItems = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+  const todayLabel = () => '09/06/2026';
+
+  return h(React.Fragment, null,
+    h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20 } },
+      h(PageTitle, { title:'Beneficiários', subtitle:'Cadastro completo das famílias atendidas pela ONG.' }),
+      h(PrimaryButton, { label:'Novo beneficiário', icon:'plus', onClick:()=>setModal('new') })
+    ),
+    h(Card, null,
+      h('div', { style:{ marginBottom:18 } }, h(SearchInput, { value:q, onChange:setQ, placeholder:'Buscar por nome, CPF ou telefone...' })),
+      h('div', { className:'table-scroll', style:{ overflowX:'auto' } },
+        h('table', { style:{ width:'100%', borderCollapse:'collapse', minWidth:840 } },
+          h('thead', null, h('tr', null, h(Th,null,'Nome'), h(Th,null,'CPF'), h(Th,null,'Telefone'), h(Th,null,'Dependentes'), h(Th,null,'Última distribuição'), h(Th,null,'Status'), h(Th,{align:'right'},'Ações'))),
+          h('tbody', null,
+            pageItems.length === 0
+              ? h('tr', null, h('td', { colSpan:7, style:{ padding:'28px 16px', textAlign:'center', color:T.textSec, fontSize:14, borderTop:`1px solid ${T.border}` } }, 'Nenhum beneficiário encontrado.'))
+              : pageItems.map((b, i) => h('tr', { key:b.id, className:'row-hover' },
+                  h(Td, null, h('div', { style:{ display:'flex', alignItems:'center', gap:10 } }, h(Avatar,{label:b.nome,colorIndex:i}), b.nome)),
+                  h(Td, null, b.cpf),
+                  h(Td, null, b.telefone),
+                  h(Td, null, h('span', { style:{ display:'inline-flex', alignItems:'center', justifyContent:'center', minWidth:26, height:22, padding:'0 8px', borderRadius:999, background:'rgba(148,163,184,0.12)', fontSize:12.5, fontWeight:700, color:T.text } }, b.dependentes)),
+                  h(Td, null, b.ultima),
+                  h(Td, null, h(Pill, { color:T.success, label:'Ativo' })),
+                  h(Td, { align:'right' }, h('div', { style:{ display:'flex', gap:6, justifyContent:'flex-end' } },
+                    h('button', { className:'action-btn', title:'Editar', onClick:()=>setModal(b),
+                      style:{ width:32, height:32, borderRadius:10, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'edit',size:14})),
+                    h('button', { className:'action-btn', title:'Excluir', onClick:()=>{ setBeneficiaries(list=>list.filter(x=>x.id!==b.id)); setToast('Beneficiário removido.'); },
+                      style:{ width:32, height:32, borderRadius:10, border:`1px solid ${hexToRgba(T.danger,0.3)}`, background:'transparent', color:T.danger, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'trash',size:14})),
+                  ))
+                ))
+          )
+        )
+      ),
+      h(Pagination, { page, setPage, total:filtered.length, pageSize:PAGE_SIZE })
+    ),
+    modal && h(BeneficiaryForm, {
+      initial: modal === 'new' ? null : modal,
+      onClose: () => setModal(null),
+      onSave: (data) => {
+        if (modal === 'new') {
+          const nextId = Math.max(0, ...beneficiaries.map(b=>b.id)) + 1;
+          setBeneficiaries(list => [...list, { id:nextId, ultima: todayLabel(), ...data }]);
+          setToast('Beneficiário cadastrado!');
+        } else {
+          setBeneficiaries(list => list.map(b => b.id === modal.id ? { ...b, ...data } : b));
+          setToast('Beneficiário atualizado!');
+        }
+        setModal(null);
+      }
+    }),
+    toast && h(Toast, { text: toast, onDone: () => setToast('') })
+  );
+}
+
+/* ---------------------------- Distribuições ---------------------------- */
+function Distributions({ beneficiaries, setBeneficiaries, inventory, setInventory }) {
+  const [q, setQ] = useState('');
+  const [selectedBenef, setSelectedBenef] = useState(null);
+  const [chosen, setChosen] = useState({}); // itemId -> qty
+  const [confirmed, setConfirmed] = useState(false);
+
+  const filteredBenef = useMemo(() => beneficiaries.filter(b =>
+    b.nome.toLowerCase().includes(q.toLowerCase()) || b.cpf.includes(q)
+  ), [beneficiaries, q]);
+
+  const toggleItem = (item) => {
+    setChosen(c => {
+      const next = { ...c };
+      if (next[item.id] != null) delete next[item.id];
+      else next[item.id] = 1;
+      return next;
+    });
+  };
+  const changeQty = (item, delta) => {
+    setChosen(c => {
+      const cur = c[item.id] || 1;
+      const next = Math.min(item.qty, Math.max(1, cur + delta));
+      return { ...c, [item.id]: next };
+    });
+  };
+
+  const chosenList = Object.entries(chosen).map(([id, qty]) => ({ ...inventory.find(i => i.id === Number(id)), qty }));
+  const canConfirm = selectedBenef && chosenList.length > 0;
+
+  const handleConfirm = () => {
+    if (!canConfirm) return;
+    setInventory(list => list.map(item => {
+      const picked = chosen[item.id];
+      return picked ? { ...item, qty: Math.max(0, item.qty - picked) } : item;
+    }));
+    setBeneficiaries(list => list.map(b => b.id === selectedBenef.id ? { ...b, ultima:'09/06/2026' } : b));
+    setSelectedBenef(null);
+    setChosen({});
+    setQ('');
+    setConfirmed(true);
+  };
+
+  return h(React.Fragment, null,
+    h(PageTitle, { title:'Nova distribuição', subtitle:'Selecione um beneficiário e monte a cesta de itens para entrega.' }),
+    h('div', { style:{ display:'grid', gridTemplateColumns:'1.3fr 1fr', gap:20, alignItems:'flex-start' } },
+      h(Card, null,
+        h('div', { style:{ marginBottom:22 } },
+          h('div', { style:{ display:'flex', alignItems:'center', gap:10, marginBottom:14 } },
+            h('div', { style:{ width:24, height:24, borderRadius:'50%', background:T.accent, color:'#fff', fontSize:12, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, '1'),
+            h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Selecione o beneficiário')
+          ),
+          h('div', { style:{ marginBottom:14 } }, h(SearchInput, { value:q, onChange:setQ, placeholder:'Buscar por nome ou CPF...' })),
+          h('div', { style:{ display:'flex', flexDirection:'column', gap:8, maxHeight:260, overflowY:'auto' } },
+            filteredBenef.length === 0
+              ? h('p', { style:{ fontSize:13.5, color:T.textSec, padding:'8px 2px' } }, 'Nenhum beneficiário encontrado.')
+              : filteredBenef.map((b,i) => {
+                  const sel = selectedBenef?.id === b.id;
+                  return h('button', { key:b.id, className:'select-btn'+(sel?' selected':''), onClick:()=>setSelectedBenef(b),
+                    style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:13, border: sel?'1.5px solid #a855f7':`1px solid ${T.border}`, background: sel?'rgba(124,58,237,0.08)':'rgba(255,255,255,0.02)', textAlign:'left' }
+                  },
+                    h(Avatar, { label:b.nome, colorIndex:i, size:32 }),
+                    h('div', { style:{ flex:1, minWidth:0 } },
+                      h('div', { style:{ fontSize:14, fontWeight:700, color:T.text } }, b.nome),
+                      h('div', { style:{ fontSize:12, color:T.textSec } }, b.cpf)
+                    ),
+                    sel && h('div', { style:{ width:22, height:22, borderRadius:'50%', background:T.accent, display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', flexShrink:0 } }, h(Icon,{name:'check',size:13}))
+                  );
+                })
+          )
+        ),
+        h('div', null,
+          h('div', { style:{ display:'flex', alignItems:'center', gap:10, marginBottom:14 } },
+            h('div', { style:{ width:24, height:24, borderRadius:'50%', background:T.accent, color:'#fff', fontSize:12, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' } }, '2'),
+            h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Itens disponíveis')
+          ),
+          h('div', { style:{ display:'flex', flexDirection:'column', gap:6 } },
+            inventory.map(item => {
+              const isChosen = chosen[item.id] != null;
+              return h('div', { key:item.id, className:'check-item', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', borderRadius:12, border:`1px solid ${T.border}` } },
+                h('button', { onClick:()=>toggleItem(item), style:{
+                  width:20, height:20, borderRadius:6, border: isChosen ? 'none' : `1.5px solid ${T.textSec}`, background: isChosen ? T.accent : 'transparent',
+                  display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, color:'#fff' } }, isChosen && h(Icon,{name:'check',size:13})),
+                h('div', { style:{ flex:1, minWidth:0 } },
+                  h('div', { style:{ fontSize:14, fontWeight:700, color:T.text } }, item.item),
+                  h('div', { style:{ fontSize:12, color:T.textSec, display:'flex', alignItems:'center', gap:8 } }, h(CategoryPill,{categoria:item.categoria}), `${item.qty} ${item.unidade} disponíveis`)
+                ),
+                isChosen && h('div', { style:{ display:'flex', alignItems:'center', gap:8 } },
+                  h('button', { className:'stepper-btn', onClick:()=>changeQty(item,-1), style:{ width:26, height:26, borderRadius:8, border:`1px solid ${T.border}`, background:'transparent', color:T.text, fontWeight:800, fontSize:15, display:'flex',alignItems:'center',justifyContent:'center' } }, '−'),
+                  h('span', { style:{ minWidth:20, textAlign:'center', fontWeight:800, fontSize:14 } }, chosen[item.id]),
+                  h('button', { className:'stepper-btn', onClick:()=>changeQty(item,1), style:{ width:26, height:26, borderRadius:8, border:`1px solid ${T.border}`, background:'transparent', color:T.text, fontWeight:800, fontSize:15, display:'flex',alignItems:'center',justifyContent:'center' } }, '+'),
+                )
+              );
+            })
+          )
+        )
+      ),
+      h(Card, { sticky:true },
+        h('h3', { style:{ fontSize:16, fontWeight:800, marginBottom:16 } }, 'Resumo'),
+        h('div', { style:{ marginBottom:18 } },
+          selectedBenef
+            ? h('div', { style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 4px' } },
+                h(Avatar, { label:selectedBenef.nome, size:36 }),
+                h('div', null, h('div',{style:{fontSize:14,fontWeight:700}},selectedBenef.nome), h('div',{style:{fontSize:12,color:T.textSec}},selectedBenef.cpf))
+              )
+            : h('div', { style:{ border:`1.5px dashed ${T.border}`, borderRadius:13, padding:'16px 14px', fontSize:13, color:T.textSec, textAlign:'center' } }, 'Nenhum beneficiário selecionado')
+        ),
+        h('div', { style:{ height:1, background:T.border, margin:'0 0 16px' } }),
+        h('div', { style:{ marginBottom:22 } },
+          chosenList.length > 0
+            ? h('div', { style:{ display:'flex', flexDirection:'column', gap:8 } },
+                chosenList.map(it => h('div', { key:it.id, style:{ display:'flex', justifyContent:'space-between', fontSize:13.5 } },
+                  h('span', { style:{ color:T.text } }, it.item),
+                  h('span', { style:{ color:T.textSec, fontWeight:700 } }, `×${it.qty}`)
+                ))
+              )
+            : h('div', { style:{ border:`1.5px dashed ${T.border}`, borderRadius:13, padding:'16px 14px', fontSize:13, color:T.textSec, textAlign:'center' } }, 'Nenhum item selecionado')
+        ),
+        h(PrimaryButton, { label:'Confirmar distribuição', disabled: !canConfirm, full:true, onClick:handleConfirm }),
+        confirmed && h('div', { style:{ marginTop:14, padding:'12px 14px', borderRadius:12, background:hexToRgba(T.success,0.12), border:`1px solid ${hexToRgba(T.success,0.3)}`, color:T.success, fontSize:13.5, fontWeight:700, display:'flex', alignItems:'center', gap:8 } },
+          h(Icon,{name:'check',size:15}), 'Distribuição registrada!'
+        )
+      )
+    )
+  );
+}
+
+/* ---------------------------- App ---------------------------- */
+function App() {
+  const [screen, setScreen] = useState('dashboard');
+  const [inventory, setInventory] = useState(initialInventory);
+  const [donations, setDonations] = useState(initialDonations);
+  const [beneficiaries, setBeneficiaries] = useState(initialBeneficiaries);
+
+  return h('div', { style:{ display:'flex', minHeight:'100vh', background:T.bg } },
+    h(Sidebar, { screen, setScreen }),
+    h('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column' } },
+      h(Header, { screen }),
+      h('main', { style:{ padding:34, flex:1 } },
+        screen === 'dashboard' && h(Dashboard, { donations, inventory, beneficiaries, setScreen }),
+        screen === 'donations' && h(Donations, { donations, setDonations }),
+        screen === 'inventory' && h(Inventory, { inventory, setInventory }),
+        screen === 'beneficiaries' && h(Beneficiaries, { beneficiaries, setBeneficiaries }),
+        screen === 'distributions' && h(Distributions, { beneficiaries, setBeneficiaries, inventory, setInventory }),
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script>
