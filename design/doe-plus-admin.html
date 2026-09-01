@@ -5,14 +5,14 @@
 <style>
   :root{
     --bg:#0a0f1e; --sidebar:#0b1120; --surface:#0e1526; --border:rgba(148,163,184,0.09);
-    --text:#e7ecf5; --text-sec:#8ea0bd; --th:#7688a6;
+    --text:#e7ecf5; --text-sec:#8ea0bd; --th:#7688a6; --color-scheme:dark;
     --accent-1:#6366f1; --accent-2:#7c3aed; --danger:#fb7185; --success:#34d399; --warning:#fbbf24;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;color-scheme:dark;}
-  body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;}
-  #root{min-height:100vh;background:var(--bg);}
-  ::selection{background:rgba(124,58,237,0.35);color:#fff;}
+  html,body{height:100%;color-scheme:var(--color-scheme,dark);}
+  body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;transition:background .2s ease,color .2s ease;}
+  #root{min-height:100vh;background:var(--bg);transition:background .2s ease;}
+  ::selection{background:rgba(124,58,237,0.75);color:#fff;}
   ::-webkit-scrollbar{width:10px;height:10px;}
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.18);border-radius:999px;}
@@ -65,13 +65,29 @@ const { useState, useMemo, useEffect, useRef } = React;
 const h = React.createElement;
 
 /* ---------------------------- tokens ---------------------------- */
-const T = {
+const DARK_THEME = {
   bg:'#0a0f1e', sidebar:'#0b1120', surface:'#0e1526', border:'rgba(148,163,184,0.09)',
   text:'#e7ecf5', textSec:'#8ea0bd', th:'#7688a6',
+  subtleFill:'rgba(255,255,255,0.02)', headerBg:'rgba(10,15,30,0.78)',
+};
+const LIGHT_THEME = {
+  bg:'#f3f5fa', sidebar:'#ffffff', surface:'#ffffff', border:'rgba(15,23,42,0.09)',
+  text:'#101828', textSec:'#5b6779', th:'#8a94a6',
+  subtleFill:'rgba(15,23,42,0.035)', headerBg:'rgba(243,245,250,0.78)',
+};
+const T = {
+  ...DARK_THEME,
   accent:'linear-gradient(135deg,#6366f1,#7c3aed)', accent1:'#6366f1', accent2:'#7c3aed',
   logoGrad:'linear-gradient(135deg,#ec4899,#a855f7)',
   danger:'#fb7185', success:'#34d399', warning:'#fbbf24', indigo:'#818cf8',
 };
+function applyTheme(mode){
+  Object.assign(T, mode === 'light' ? LIGHT_THEME : DARK_THEME);
+  const root = document.documentElement;
+  root.style.setProperty('--bg', T.bg);
+  root.style.setProperty('--text', T.text);
+  root.style.setProperty('--color-scheme', mode === 'light' ? 'light' : 'dark');
+}
 const PAGE_SIZE = 5;
 const CATEGORY_COLORS = {
   'Roupas':'#818cf8','Alimentos':'#34d399','Calçados':'#fbbf24','Brinquedos':'#f472b6',
@@ -151,6 +167,7 @@ const ICONS = {
   handHeart: [ h('path',{key:1,d:'M12 11.5c-1.4-1.3-4.5-3.4-4.5-6A2.5 2.5 0 0 1 12 4a2.5 2.5 0 0 1 4.5 1.5c0 2.6-3.1 4.7-4.5 6z'}), h('path',{key:2,d:'M3 15c0-1.7 1.3-3 3-3h1.5'}), h('path',{key:3,d:'M21 15c0-1.7-1.3-3-3-3h-1.5'}), h('path',{key:4,d:'M4 15v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1'}) ],
   megaphone: [ h('path',{key:1,d:'M3 10v4a1 1 0 0 0 1 1h2l9 5V4L6 9H4a1 1 0 0 0-1 1z'}), h('path',{key:2,d:'M17 8a4 4 0 0 1 0 8'}), h('path',{key:3,d:'M6 15v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.5'}) ],
   dollar: [ h('line',{key:1,x1:12,y1:1,x2:12,y2:23}), h('path',{key:2,d:'M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'}) ],
+  moon: [ h('path',{key:1,d:'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'}) ],
 };
 function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 2, style }) {
   return h('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:color, strokeWidth, strokeLinecap:'round', strokeLinejoin:'round', style }, ICONS[name] || []);
@@ -180,7 +197,7 @@ function SearchInput({ value, onChange, placeholder }) {
     h(Icon, { name:'search', size:16, color:T.textSec, style:{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' } }),
     h('input', {
       className:'search-input', value, placeholder, onChange:e=>onChange(e.target.value),
-      style:{ width:'100%', height:40, borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontSize:14, padding:'0 14px 0 38px', fontFamily:'inherit', transition:'border-color .15s ease, background .15s ease' }
+      style:{ width:'100%', height:40, borderRadius:13, border:`1px solid ${T.border}`, background:T.subtleFill, color:T.text, fontSize:14, padding:'0 14px 0 38px', fontFamily:'inherit', transition:'border-color .15s ease, background .15s ease' }
     })
   );
 }
@@ -188,7 +205,7 @@ function SearchInput({ value, onChange, placeholder }) {
 function IconButton({ name, onClick, title, size=40, danger=false, disabled=false, iconSize=18 }) {
   return h('button', {
     className:'icon-btn', onClick, title, disabled,
-    style:{ width:size, height:size, borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)',
+    style:{ width:size, height:size, borderRadius:13, border:`1px solid ${T.border}`, background:T.subtleFill,
       display:'flex', alignItems:'center', justifyContent:'center', color: danger ? T.danger : T.textSec, opacity: disabled ? 0.35 : 1 }
   }, h(Icon, { name, size:iconSize }));
 }
@@ -204,7 +221,7 @@ function PrimaryButton({ label, onClick, icon, disabled=false, full=false }) {
 
 function GhostButton({ label, onClick, icon }) {
   return h('button', { className:'ghost-btn', onClick,
-    style:{ height:38, padding:'0 14px', borderRadius:13, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.textSec, fontWeight:600, fontSize:13.5, display:'inline-flex', alignItems:'center', gap:8 }
+    style:{ height:38, padding:'0 14px', borderRadius:13, border:`1px solid ${T.border}`, background:T.subtleFill, color:T.textSec, fontWeight:600, fontSize:13.5, display:'inline-flex', alignItems:'center', gap:8 }
   }, icon && h(Icon, { name:icon, size:15 }), label);
 }
 
@@ -264,15 +281,15 @@ function Modal({ title, onClose, children, wide=false }) {
 function Field({ label, children }) {
   return h('label', { style:{ display:'flex', flexDirection:'column', gap:6, fontSize:13, color:T.textSec, fontWeight:600 } }, label, children);
 }
-const fieldInputStyle = { height:42, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontSize:14, padding:'0 12px', fontFamily:'inherit' };
+function fieldInputStyle(){ return { height:42, borderRadius:12, border:`1px solid ${T.border}`, background:T.subtleFill, color:T.text, fontSize:14, padding:'0 12px', fontFamily:'inherit' }; }
 
 function Toast({ text, onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, []);
   return h('div', { style:{
     position:'fixed', top:24, left:'50%', transform:'translateX(-50%)', zIndex:200,
-    background:'rgba(16,24,42,0.95)', border:`1px solid ${hexToRgba(T.success,0.35)}`, color:T.text,
+    background:T.surface, border:`1px solid ${hexToRgba(T.success,0.35)}`, color:T.text,
     padding:'12px 20px', borderRadius:14, display:'flex', alignItems:'center', gap:10, fontSize:14, fontWeight:600,
-    boxShadow:'0 12px 30px rgba(0,0,0,0.4)', animation:'toastIn .2s ease',
+    boxShadow:'0 12px 30px rgba(0,0,0,0.25)', animation:'toastIn .2s ease',
   } },
     h('div', { style:{ width:24, height:24, borderRadius:'50%', background:hexToRgba(T.success,0.18), display:'flex', alignItems:'center', justifyContent:'center', color:T.success, flexShrink:0 } }, h(Icon,{name:'check',size:14})),
     text
@@ -294,7 +311,7 @@ function Sidebar({ screen, setScreen }) {
       h('div', { style:{ width:40, height:40, borderRadius:13, background:T.logoGrad, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 } }, h(Icon,{ name:'heart', size:19, color:'#fff', strokeWidth:2.4 })),
       h('div', { style:{ fontSize:19, fontWeight:800, letterSpacing:'-0.01em' } }, 'Doe', h('span',{style:{color:'#a855f7'}},'+'))
     ),
-    h('div', { style:{ margin:'0 18px 16px', padding:12, borderRadius:14, background:'rgba(255,255,255,0.02)', border:`1px solid ${T.border}`, display:'flex', alignItems:'center', gap:10 } },
+    h('div', { style:{ margin:'0 18px 16px', padding:12, borderRadius:14, background:T.subtleFill, border:`1px solid ${T.border}`, display:'flex', alignItems:'center', gap:10 } },
       h('div', { style:{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#6366f1,#a855f7)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:14, color:'#fff', flexShrink:0 } }, 'A'),
       h('div', { style:{ minWidth:0 } },
         h('div', { style:{ fontSize:13.5, fontWeight:700, color:T.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' } }, 'Administrador'),
@@ -323,15 +340,15 @@ function Sidebar({ screen, setScreen }) {
   );
 }
 
-function Header({ screen }) {
+function Header({ screen, theme, onToggleTheme }) {
   const label = NAV_ITEMS.find(n => n.key === screen)?.label || '';
-  return h('header', { style:{ position:'sticky', top:0, zIndex:20, height:72, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 34px', background:'rgba(10,15,30,0.78)', backdropFilter:'blur(10px)', borderBottom:`1px solid ${T.border}` } },
+  return h('header', { style:{ position:'sticky', top:0, zIndex:20, height:72, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 34px', background:T.headerBg, backdropFilter:'blur(10px)', borderBottom:`1px solid ${T.border}` } },
     h('div', { style:{ fontSize:15, fontWeight:700, color:T.text } }, label),
     h('div', { style:{ display:'flex', alignItems:'center', gap:10 } },
-      h(IconButton, { name:'sun', title:'Alternar tema' }),
+      h(IconButton, { name: theme === 'dark' ? 'sun' : 'moon', onClick:onToggleTheme, title: theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro' }),
       h('div', { style:{ position:'relative' } },
         h(IconButton, { name:'bell', title:'Notificações' }),
-        h('span', { style:{ position:'absolute', top:6, right:6, width:8, height:8, borderRadius:'50%', background:T.danger, border:'2px solid #0a0f1e' } })
+        h('span', { style:{ position:'absolute', top:6, right:6, width:8, height:8, borderRadius:'50%', background:T.danger, border:`2px solid ${T.bg}` } })
       )
     )
   );
@@ -446,7 +463,7 @@ function Donations({ donations, setDonations }) {
         const active = tab === t.key;
         return h('button', { key:t.key, className:'tab-pill'+(active?' active':''), onClick:()=>setTab(t.key),
           style:{ padding:'9px 16px', borderRadius:999, border:'none', fontSize:13.5, fontWeight:700, display:'flex', alignItems:'center', gap:8,
-            background: active ? T.accent : 'rgba(255,255,255,0.02)', color: active ? '#fff' : T.textSec, border: active?'none':`1px solid ${T.border}` }
+            background: active ? T.accent : T.subtleFill, color: active ? '#fff' : T.textSec, border: active?'none':`1px solid ${T.border}` }
         }, t.label, h('span', { style:{ fontSize:11.5, padding:'1px 7px', borderRadius:999, background: active?'rgba(255,255,255,0.22)':'rgba(148,163,184,0.14)' } }, count));
       })
     ),
@@ -488,13 +505,13 @@ function CampaignForm({ onSave, onClose }) {
   const valid = form.titulo.trim() && form.meta !== '' && Number(form.meta) > 0 && form.descricao.trim();
   return h(Modal, { title:'Nova campanha', onClose },
     h('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
-      h(Field, { label:'Título' }, h('input', { style:fieldInputStyle, value:form.titulo, onChange:e=>set('titulo',e.target.value), placeholder:'Ex: Campanha do Agasalho' })),
+      h(Field, { label:'Título' }, h('input', { style:fieldInputStyle(), value:form.titulo, onChange:e=>set('titulo',e.target.value), placeholder:'Ex: Campanha do Agasalho' })),
       h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
-        h(Field, { label:'Categoria' }, h('select', { style:fieldInputStyle, value:form.categoria, onChange:e=>set('categoria',e.target.value) },
+        h(Field, { label:'Categoria' }, h('select', { style:fieldInputStyle(), value:form.categoria, onChange:e=>set('categoria',e.target.value) },
           Object.keys(CATEGORY_COLORS).map(c => h('option',{key:c,value:c},c)))),
-        h(Field, { label:'Meta (R$)' }, h('input', { type:'number', min:1, style:fieldInputStyle, value:form.meta, onChange:e=>set('meta',e.target.value) })),
+        h(Field, { label:'Meta (R$)' }, h('input', { type:'number', min:1, style:fieldInputStyle(), value:form.meta, onChange:e=>set('meta',e.target.value) })),
       ),
-      h(Field, { label:'Descrição' }, h('input', { style:fieldInputStyle, value:form.descricao, onChange:e=>set('descricao',e.target.value), placeholder:'Para que a verba será usada' })),
+      h(Field, { label:'Descrição' }, h('input', { style:fieldInputStyle(), value:form.descricao, onChange:e=>set('descricao',e.target.value), placeholder:'Para que a verba será usada' })),
       h(PrimaryButton, { label:'Criar campanha', disabled: !valid, full:true,
         onClick: () => valid && onSave({ ...form, meta:Number(form.meta) }) })
     )
@@ -531,9 +548,9 @@ function CampaignCard({ campaign, onDonate }) {
         )
       : h('div', { style:{ display:'flex', gap:8 } },
           h('button', { className:'ghost-btn', onClick:()=>onDonate(c.id,25),
-            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 25'),
+            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:T.subtleFill, color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 25'),
           h('button', { className:'ghost-btn', onClick:()=>onDonate(c.id,50),
-            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 50'),
+            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:T.subtleFill, color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 50'),
           h('button', { className:'primary-btn', onClick:()=>onDonate(c.id,100),
             style:{ flex:1.3, height:38, borderRadius:12, border:'none', background:T.accent, color:'#fff', fontWeight:700, fontSize:13.5 } }, 'Doar R$ 100'),
         )
@@ -584,12 +601,12 @@ function BeneficiaryForm({ initial, onSave, onClose }) {
   const valid = form.nome.trim() && form.cpf.trim() && form.telefone.trim() && form.dependentes !== '';
   return h(Modal, { title: initial ? 'Editar beneficiário' : 'Novo beneficiário', onClose },
     h('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
-      h(Field, { label:'Nome completo' }, h('input', { style:fieldInputStyle, value:form.nome, onChange:e=>set('nome',e.target.value), placeholder:'Ex: Maria Silva' })),
+      h(Field, { label:'Nome completo' }, h('input', { style:fieldInputStyle(), value:form.nome, onChange:e=>set('nome',e.target.value), placeholder:'Ex: Maria Silva' })),
       h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
-        h(Field, { label:'CPF' }, h('input', { style:fieldInputStyle, value:form.cpf, onChange:e=>set('cpf',e.target.value), placeholder:'000.000.000-00' })),
-        h(Field, { label:'Telefone' }, h('input', { style:fieldInputStyle, value:form.telefone, onChange:e=>set('telefone',e.target.value), placeholder:'(11) 90000-0000' })),
+        h(Field, { label:'CPF' }, h('input', { style:fieldInputStyle(), value:form.cpf, onChange:e=>set('cpf',e.target.value), placeholder:'000.000.000-00' })),
+        h(Field, { label:'Telefone' }, h('input', { style:fieldInputStyle(), value:form.telefone, onChange:e=>set('telefone',e.target.value), placeholder:'(11) 90000-0000' })),
       ),
-      h(Field, { label:'Dependentes' }, h('input', { type:'number', min:0, style:fieldInputStyle, value:form.dependentes, onChange:e=>set('dependentes',e.target.value) })),
+      h(Field, { label:'Dependentes' }, h('input', { type:'number', min:0, style:fieldInputStyle(), value:form.dependentes, onChange:e=>set('dependentes',e.target.value) })),
       h(PrimaryButton, { label: initial ? 'Salvar alterações' : 'Cadastrar beneficiário', disabled: !valid, full:true,
         onClick: () => valid && onSave({ ...form, dependentes:Number(form.dependentes) }) })
     )
@@ -717,7 +734,7 @@ function Distributions({ beneficiaries, setBeneficiaries, inventory, setInventor
               : filteredBenef.map((b,i) => {
                   const sel = selectedBenef?.id === b.id;
                   return h('button', { key:b.id, className:'select-btn'+(sel?' selected':''), onClick:()=>setSelectedBenef(b),
-                    style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:13, border: sel?'1.5px solid #a855f7':`1px solid ${T.border}`, background: sel?'rgba(124,58,237,0.08)':'rgba(255,255,255,0.02)', textAlign:'left' }
+                    style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 14px', borderRadius:13, border: sel?'1.5px solid #a855f7':`1px solid ${T.border}`, background: sel?'rgba(124,58,237,0.08)':T.subtleFill, textAlign:'left' }
                   },
                     h(Avatar, { label:b.nome, colorIndex:i, size:32 }),
                     h('div', { style:{ flex:1, minWidth:0 } },
@@ -788,15 +805,19 @@ function Distributions({ beneficiaries, setBeneficiaries, inventory, setInventor
 /* ---------------------------- App ---------------------------- */
 function App() {
   const [screen, setScreen] = useState('dashboard');
+  const [theme, setTheme] = useState('dark');
   const [inventory, setInventory] = useState(initialInventory);
   const [donations, setDonations] = useState(initialDonations);
   const [beneficiaries, setBeneficiaries] = useState(initialBeneficiaries);
   const [campaigns, setCampaigns] = useState(initialCampaigns);
 
+  applyTheme(theme);
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
   return h('div', { style:{ display:'flex', minHeight:'100vh', background:T.bg } },
     h(Sidebar, { screen, setScreen }),
     h('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column' } },
-      h(Header, { screen }),
+      h(Header, { screen, theme, onToggleTheme:toggleTheme }),
       h('main', { style:{ padding:34, flex:1 } },
         screen === 'dashboard' && h(Dashboard, { donations, campaigns, beneficiaries, setScreen }),
         screen === 'donations' && h(Donations, { donations, setDonations }),
