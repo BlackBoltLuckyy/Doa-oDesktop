@@ -85,6 +85,7 @@ function hexToRgba(hex, a){
   const r = parseInt(c.substring(0,2),16), g = parseInt(c.substring(2,4),16), b = parseInt(c.substring(4,6),16);
   return `rgba(${r},${g},${b},${a})`;
 }
+function formatBRL(n){ return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
 
 /* ---------------------------- mock data ---------------------------- */
 const initialInventory = [
@@ -113,6 +114,14 @@ const initialBeneficiaries = [
   { id:6, nome:'Roberto Nunes', cpf:'666.133.199-66', telefone:'(11) 96000-0005', dependentes:0, ultima:'16/05/2026' },
   { id:7, nome:'Lucia Santos', cpf:'777.155.233-77', telefone:'(11) 97000-0006', dependentes:3, ultima:'19/05/2026' },
 ];
+const initialCampaigns = [
+  { id:1, titulo:'Campanha do Agasalho', categoria:'Roupas', meta:15000, arrecadado:9200, doadores:84, descricao:'Precisamos de mais verba para comprar agasalhos e cobertores antes do inverno.' },
+  { id:2, titulo:'Cesta Básica Solidária', categoria:'Alimentos', meta:20000, arrecadado:17500, doadores:132, descricao:'Cada real vira alimento: montamos e entregamos cestas para famílias em vulnerabilidade.' },
+  { id:3, titulo:'Volta às Aulas', categoria:'Material escolar', meta:8000, arrecadado:3100, doadores:47, descricao:'Compra de kits de material escolar para as crianças da comunidade.' },
+  { id:4, titulo:'Calçados para Todos', categoria:'Calçados', meta:10000, arrecadado:6400, doadores:59, descricao:'Ajude a comprar calçados novos para adultos e crianças atendidas.' },
+  { id:5, titulo:'Brinquedos de Natal', categoria:'Brinquedos', meta:12000, arrecadado:12000, doadores:210, descricao:'Leve um presente de Natal para cada criança do projeto.' },
+  { id:6, titulo:'Kit Higiene', categoria:'Outros', meta:6000, arrecadado:900, doadores:12, descricao:'Itens de higiene pessoal para famílias e abrigos parceiros.' },
+];
 
 /* ---------------------------- icons ---------------------------- */
 const ICONS = {
@@ -139,6 +148,9 @@ const ICONS = {
   trendDown: [ h('polyline',{key:1,points:'23 18 13.5 8.5 8.5 13.5 1 6'}), h('polyline',{key:2,points:'17 18 23 18 23 12'}) ],
   clock: [ h('circle',{key:1,cx:12,cy:12,r:10}), h('polyline',{key:2,points:'12 6 12 12 16 14'}) ],
   boxes: [ h('path',{key:1,d:'M2.97 12.92 12 18l9.03-5.08'}), h('path',{key:2,d:'M2.97 8.08 12 3l9.03 5.08L12 13.15 2.97 8.08z'}), h('path',{key:3,d:'M12 22V13.15'}) ],
+  handHeart: [ h('path',{key:1,d:'M12 11.5c-1.4-1.3-4.5-3.4-4.5-6A2.5 2.5 0 0 1 12 4a2.5 2.5 0 0 1 4.5 1.5c0 2.6-3.1 4.7-4.5 6z'}), h('path',{key:2,d:'M3 15c0-1.7 1.3-3 3-3h1.5'}), h('path',{key:3,d:'M21 15c0-1.7-1.3-3-3-3h-1.5'}), h('path',{key:4,d:'M4 15v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1'}) ],
+  megaphone: [ h('path',{key:1,d:'M3 10v4a1 1 0 0 0 1 1h2l9 5V4L6 9H4a1 1 0 0 0-1 1z'}), h('path',{key:2,d:'M17 8a4 4 0 0 1 0 8'}), h('path',{key:3,d:'M6 15v3a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-2.5'}) ],
+  dollar: [ h('line',{key:1,x1:12,y1:1,x2:12,y2:23}), h('path',{key:2,d:'M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'}) ],
 };
 function Icon({ name, size = 18, color = 'currentColor', strokeWidth = 2, style }) {
   return h('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:color, strokeWidth, strokeLinecap:'round', strokeLinejoin:'round', style }, ICONS[name] || []);
@@ -271,7 +283,7 @@ function Toast({ text, onDone }) {
 const NAV_ITEMS = [
   { key:'dashboard', label:'Dashboard', icon:'grid' },
   { key:'donations', label:'Doações', icon:'heart' },
-  { key:'inventory', label:'Estoque', icon:'package' },
+  { key:'campaigns', label:'Campanhas', icon:'handHeart' },
   { key:'beneficiaries', label:'Beneficiários', icon:'users' },
   { key:'distributions', label:'Distribuições', icon:'truck' },
 ];
@@ -344,19 +356,23 @@ function MetricCard({ icon, iconColor, label, value, trend, trendIcon }) {
   );
 }
 
-function Dashboard({ donations, inventory, beneficiaries, setScreen }) {
+function Dashboard({ donations, campaigns, beneficiaries, setScreen }) {
   const pending = donations.filter(d => d.status === 'Pendente').length;
-  const totalStock = inventory.reduce((s,i) => s + i.qty, 0);
-  const lowStock = inventory.filter(i => i.qty <= 10);
+  const totalArrecadado = campaigns.reduce((s,c) => s + c.arrecadado, 0);
+  const totalMeta = campaigns.reduce((s,c) => s + c.meta, 0);
+  const metaPct = totalMeta ? Math.round((totalArrecadado / totalMeta) * 100) : 0;
+  const activeCampaigns = campaigns.filter(c => c.arrecadado < c.meta);
+  const concludedCount = campaigns.length - activeCampaigns.length;
   const recent = donations.slice(0, 4);
+  const featured = activeCampaigns.slice(0, 3);
 
   return h(React.Fragment, null,
     h(PageTitle, { title:'Dashboard', subtitle:'Visão geral das doações, estoque e beneficiários da ONG.' }),
     h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(4, minmax(0,1fr))', gap:20, marginBottom:24 } },
       h(MetricCard, { icon:'clock', iconColor:T.warning, label:'Doações pendentes', value:pending, trend:`+${pending} novas`, trendIcon:'trendUp' }),
-      h(MetricCard, { icon:'boxes', iconColor:T.accent1, label:'Itens em estoque', value:totalStock, trend:'+8%', trendIcon:'trendUp' }),
+      h(MetricCard, { icon:'dollar', iconColor:T.success, label:'Total arrecadado', value:formatBRL(totalArrecadado), trend:`${metaPct}% da meta`, trendIcon:'trendUp' }),
       h(MetricCard, { icon:'users', iconColor:T.success, label:'Beneficiários ativos', value:beneficiaries.length, trend:'+1 novo', trendIcon:'trendUp' }),
-      h(MetricCard, { icon:'alert', iconColor:T.danger, label:'Estoque baixo', value:lowStock.length, trend:'atenção', trendIcon:'trendDown' }),
+      h(MetricCard, { icon:'handHeart', iconColor:'#f472b6', label:'Campanhas ativas', value:activeCampaigns.length, trend:`${concludedCount} concluída${concludedCount===1?'':'s'}`, trendIcon:'trendUp' }),
     ),
     h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 } },
       h(Card, null,
@@ -377,20 +393,29 @@ function Dashboard({ donations, inventory, beneficiaries, setScreen }) {
       ),
       h(Card, null,
         h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 } },
-          h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Alertas de estoque baixo'),
-          h('button', { className:'link-btn', onClick:()=>setScreen('inventory'), style:{ background:'none', border:'none', color:'#a78bfa', fontSize:13, fontWeight:700 } }, 'Gerenciar estoque →')
+          h('div', { style:{ display:'flex', alignItems:'center', gap:9 } },
+            h('div', { style:{ width:26, height:26, borderRadius:9, background:hexToRgba('#f472b6',0.15), display:'flex', alignItems:'center', justifyContent:'center', color:'#f472b6', flexShrink:0 } }, h(Icon,{name:'megaphone',size:14})),
+            h('h3', { style:{ fontSize:16, fontWeight:800 } }, 'Campanhas em destaque')
+          ),
+          h('button', { className:'link-btn', onClick:()=>setScreen('campaigns'), style:{ background:'none', border:'none', color:'#a78bfa', fontSize:13, fontWeight:700 } }, 'Ver campanhas →')
         ),
-        lowStock.length === 0
-          ? h('p', { style:{ fontSize:13.5, color:T.textSec } }, 'Nenhum item com estoque baixo.')
+        featured.length === 0
+          ? h('p', { style:{ fontSize:13.5, color:T.textSec } }, 'Nenhuma campanha ativa no momento.')
           : h('div', { style:{ display:'flex', flexDirection:'column', gap:4 } },
-              lowStock.map(item => h('div', { key:item.id, className:'row-hover', style:{ display:'flex', alignItems:'center', gap:12, padding:'10px 8px', borderRadius:12 } },
-                h('div', { style:{ width:34, height:34, borderRadius:11, background:hexToRgba(T.danger,0.14), display:'flex', alignItems:'center', justifyContent:'center', color:T.danger, flexShrink:0 } }, h(Icon,{name:'alert',size:16})),
-                h('div', { style:{ flex:1, minWidth:0 } },
-                  h('div', { style:{ fontSize:14, fontWeight:700, color:T.text } }, item.item),
-                  h('div', { style:{ fontSize:12.5, color:T.textSec } }, item.categoria)
-                ),
-                h('div', { style:{ fontSize:15, fontWeight:800, color:T.danger } }, `${item.qty} ${item.unidade}`)
-              ))
+              featured.map(c => {
+                const pct = Math.min(100, Math.round((c.arrecadado / c.meta) * 100));
+                const color = CATEGORY_COLORS[c.categoria] || CATEGORY_COLORS.Outros;
+                return h('div', { key:c.id, className:'row-hover', style:{ padding:'10px 8px', borderRadius:12 } },
+                  h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:7 } },
+                    h('span', { style:{ fontSize:14, fontWeight:700, color:T.text } }, c.titulo),
+                    h('span', { style:{ fontSize:12.5, fontWeight:800, color } }, `${pct}%`)
+                  ),
+                  h('div', { style:{ height:7, borderRadius:999, background:'rgba(148,163,184,0.12)', overflow:'hidden', marginBottom:7 } },
+                    h('div', { style:{ height:'100%', width:`${pct}%`, borderRadius:999, background:`linear-gradient(90deg, ${hexToRgba(color,0.7)}, ${color})`, transition:'width .45s ease' } })
+                  ),
+                  h('div', { style:{ fontSize:12, color:T.textSec } }, `${formatBRL(c.arrecadado)} de ${formatBRL(c.meta)}`)
+                );
+              })
             )
       )
     )
@@ -456,98 +481,96 @@ function Donations({ donations, setDonations }) {
   );
 }
 
-/* ---------------------------- Estoque ---------------------------- */
-function InventoryForm({ initial, onSave, onClose }) {
-  const [form, setForm] = useState(initial || { item:'', categoria:'Roupas', qty:'', unidade:'un', origem:'' });
+/* ---------------------------- Campanhas ---------------------------- */
+function CampaignForm({ onSave, onClose }) {
+  const [form, setForm] = useState({ titulo:'', categoria:'Roupas', meta:'', descricao:'' });
   const set = (k,v) => setForm(f => ({ ...f, [k]: v }));
-  const valid = form.item.trim() && form.qty !== '' && Number(form.qty) >= 0 && form.unidade.trim();
-  return h(Modal, { title: initial ? 'Editar item' : 'Nova entrada de estoque', onClose },
+  const valid = form.titulo.trim() && form.meta !== '' && Number(form.meta) > 0 && form.descricao.trim();
+  return h(Modal, { title:'Nova campanha', onClose },
     h('div', { style:{ display:'flex', flexDirection:'column', gap:14 } },
-      h(Field, { label:'Item' }, h('input', { style:fieldInputStyle, value:form.item, onChange:e=>set('item',e.target.value), placeholder:'Ex: Cobertor' })),
+      h(Field, { label:'Título' }, h('input', { style:fieldInputStyle, value:form.titulo, onChange:e=>set('titulo',e.target.value), placeholder:'Ex: Campanha do Agasalho' })),
       h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
         h(Field, { label:'Categoria' }, h('select', { style:fieldInputStyle, value:form.categoria, onChange:e=>set('categoria',e.target.value) },
           Object.keys(CATEGORY_COLORS).map(c => h('option',{key:c,value:c},c)))),
-        h(Field, { label:'Unidade' }, h('input', { style:fieldInputStyle, value:form.unidade, onChange:e=>set('unidade',e.target.value), placeholder:'un, par, cesta...' })),
+        h(Field, { label:'Meta (R$)' }, h('input', { type:'number', min:1, style:fieldInputStyle, value:form.meta, onChange:e=>set('meta',e.target.value) })),
       ),
-      h('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 } },
-        h(Field, { label:'Quantidade' }, h('input', { type:'number', min:0, style:fieldInputStyle, value:form.qty, onChange:e=>set('qty',e.target.value) })),
-        h(Field, { label:'Origem' }, h('input', { style:fieldInputStyle, value:form.origem, onChange:e=>set('origem',e.target.value), placeholder:'Doação #...' })),
-      ),
-      h(PrimaryButton, { label: initial ? 'Salvar alterações' : 'Adicionar item', disabled: !valid, full:true,
-        onClick: () => valid && onSave({ ...form, qty:Number(form.qty) }) })
+      h(Field, { label:'Descrição' }, h('input', { style:fieldInputStyle, value:form.descricao, onChange:e=>set('descricao',e.target.value), placeholder:'Para que a verba será usada' })),
+      h(PrimaryButton, { label:'Criar campanha', disabled: !valid, full:true,
+        onClick: () => valid && onSave({ ...form, meta:Number(form.meta) }) })
     )
   );
 }
 
-function Inventory({ inventory, setInventory }) {
-  const [q, setQ] = useState('');
-  const [modal, setModal] = useState(null); // null | 'new' | item
-  const [toast, setToast] = useState('');
-  const filtered = useMemo(() => inventory.filter(i =>
-    i.item.toLowerCase().includes(q.toLowerCase()) || i.categoria.toLowerCase().includes(q.toLowerCase()) || i.origem.toLowerCase().includes(q.toLowerCase())
-  ), [inventory, q]);
-  const [page, setPage] = usePage([q]);
-  const pageItems = filtered.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
-  const categorias = new Set(inventory.map(i => i.categoria)).size;
-  const lowStock = inventory.filter(i => i.qty <= 10).length;
+function CampaignCard({ campaign, onDonate }) {
+  const c = campaign;
+  const color = CATEGORY_COLORS[c.categoria] || CATEGORY_COLORS.Outros;
+  const pct = Math.min(100, Math.round((c.arrecadado / c.meta) * 100));
+  const done = c.arrecadado >= c.meta;
+  return h(Card, { style:{ display:'flex', flexDirection:'column', gap:14 } },
+    h('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 } },
+      h(CategoryPill, { categoria:c.categoria }),
+      done && h('span', { style:{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 9px 3px 7px', borderRadius:999, fontSize:11.5, fontWeight:700, background:hexToRgba(T.success,0.14), border:`1px solid ${hexToRgba(T.success,0.3)}`, color:T.success } }, h(Icon,{name:'check',size:11}), 'Meta atingida')
+    ),
+    h('div', null,
+      h('h3', { style:{ fontSize:17, fontWeight:800, marginBottom:6 } }, c.titulo),
+      h('p', { style:{ fontSize:13.5, color:T.textSec, lineHeight:1.5 } }, c.descricao)
+    ),
+    h('div', null,
+      h('div', { style:{ display:'flex', alignItems:'baseline', gap:6, marginBottom:10 } },
+        h('span', { style:{ fontSize:24, fontWeight:800 } }, formatBRL(c.arrecadado)),
+        h('span', { style:{ fontSize:12.5, color:T.textSec, fontWeight:600 } }, `de ${formatBRL(c.meta)} · ${pct}%`)
+      ),
+      h('div', { style:{ height:8, borderRadius:999, background:'rgba(148,163,184,0.12)', overflow:'hidden' } },
+        h('div', { style:{ height:'100%', width:`${pct}%`, borderRadius:999, background:`linear-gradient(90deg, ${hexToRgba(color,0.7)}, ${color})`, transition:'width .45s ease' } })
+      )
+    ),
+    h('div', { style:{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:T.textSec, fontWeight:600 } }, h(Icon,{name:'users',size:14}), `${c.doadores} doadores`),
+    done
+      ? h('div', { style:{ padding:'10px 14px', borderRadius:12, background:hexToRgba(T.success,0.12), border:`1px solid ${hexToRgba(T.success,0.3)}`, color:T.success, fontSize:13.5, fontWeight:700, display:'flex', alignItems:'center', gap:8, justifyContent:'center' } },
+          h(Icon,{name:'check',size:15}), 'Campanha concluída — obrigado!'
+        )
+      : h('div', { style:{ display:'flex', gap:8 } },
+          h('button', { className:'ghost-btn', onClick:()=>onDonate(c.id,25),
+            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 25'),
+          h('button', { className:'ghost-btn', onClick:()=>onDonate(c.id,50),
+            style:{ flex:1, height:38, borderRadius:12, border:`1px solid ${T.border}`, background:'rgba(255,255,255,0.02)', color:T.text, fontWeight:700, fontSize:13.5 } }, 'R$ 50'),
+          h('button', { className:'primary-btn', onClick:()=>onDonate(c.id,100),
+            style:{ flex:1.3, height:38, borderRadius:12, border:'none', background:T.accent, color:'#fff', fontWeight:700, fontSize:13.5 } }, 'Doar R$ 100'),
+        )
+  );
+}
 
-  const todayLabel = () => '09/06/2026';
+function Campaigns({ campaigns, setCampaigns }) {
+  const [modal, setModal] = useState(false);
+  const [toast, setToast] = useState('');
+  const totalArrecadado = campaigns.reduce((s,c) => s + c.arrecadado, 0);
+  const activeCount = campaigns.filter(c => c.arrecadado < c.meta).length;
+  const totalDoadores = campaigns.reduce((s,c) => s + c.doadores, 0);
+
+  const handleDonate = (id, valor) => {
+    setCampaigns(list => list.map(c => c.id === id ? { ...c, arrecadado: Math.min(c.meta, c.arrecadado + valor) } : c));
+  };
 
   return h(React.Fragment, null,
-    h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20, marginBottom:0 } },
-      h(PageTitle, { title:'Gestão de estoque', subtitle:'Acompanhe as quantidades disponíveis e a origem de cada item.' }),
-      h(PrimaryButton, { label:'Nova entrada', icon:'plus', onClick:()=>setModal('new') })
+    h('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20 } },
+      h(PageTitle, { title:'Campanhas', subtitle:'Doe dinheiro para as campanhas ativas — a verba é usada para comprar o que falta.' }),
+      h(PrimaryButton, { label:'Nova campanha', icon:'plus', onClick:()=>setModal(true) })
     ),
     h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(3, minmax(0,1fr))', gap:20, marginBottom:24 } },
-      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Itens cadastrados'), h('div',{style:{fontSize:26,fontWeight:800}},inventory.length)),
-      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Categorias'), h('div',{style:{fontSize:26,fontWeight:800}},categorias)),
-      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Estoque baixo'), h('div',{style:{fontSize:26,fontWeight:800,color:lowStock>0?T.danger:T.text}},lowStock)),
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Total arrecadado'), h('div',{style:{fontSize:26,fontWeight:800,color:T.success}},formatBRL(totalArrecadado))),
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Campanhas ativas'), h('div',{style:{fontSize:26,fontWeight:800}},activeCount)),
+      h(Card, null, h('div',{style:{fontSize:13.5,color:T.textSec,fontWeight:600,marginBottom:8}},'Doadores'), h('div',{style:{fontSize:26,fontWeight:800}},totalDoadores)),
     ),
-    h(Card, null,
-      h('div', { style:{ marginBottom:18 } }, h(SearchInput, { value:q, onChange:setQ, placeholder:'Buscar por item, categoria ou origem...' })),
-      h('div', { className:'table-scroll', style:{ overflowX:'auto' } },
-        h('table', { style:{ width:'100%', borderCollapse:'collapse', minWidth:820 } },
-          h('thead', null, h('tr', null, h(Th,null,'#'), h(Th,null,'Item'), h(Th,null,'Categoria'), h(Th,null,'Quantidade'), h(Th,null,'Unidade'), h(Th,null,'Entrada'), h(Th,null,'Origem'), h(Th,{align:'right'},'Ações'))),
-          h('tbody', null,
-            pageItems.length === 0
-              ? h('tr', null, h('td', { colSpan:8, style:{ padding:'28px 16px', textAlign:'center', color:T.textSec, fontSize:14, borderTop:`1px solid ${T.border}` } }, 'Nenhum item encontrado.'))
-              : pageItems.map(item => {
-                  const low = item.qty <= 10;
-                  return h('tr', { key:item.id, className:'row-hover' },
-                    h(Td, null, item.id),
-                    h(Td, null, item.item),
-                    h(Td, null, h(CategoryPill, { categoria:item.categoria })),
-                    h(Td, null, h('div', { style:{ display:'flex', alignItems:'center', gap:8 } },
-                      h('span', { style:{ fontWeight:800, color: low ? T.danger : T.text } }, item.qty),
-                      low && h('span', { style:{ display:'inline-flex', alignItems:'center', gap:5, padding:'3px 9px 3px 7px', borderRadius:999, fontSize:11.5, fontWeight:700, background:hexToRgba(T.danger,0.12), border:`1px solid ${hexToRgba(T.danger,0.28)}`, color:T.danger } }, h(Icon,{name:'alert',size:11}), 'BAIXO'))
-                    ),
-                    h(Td, null, item.unidade),
-                    h(Td, null, item.entrada),
-                    h(Td, null, item.origem),
-                    h(Td, { align:'right' }, h('div', { style:{ display:'flex', justifyContent:'flex-end' } },
-                      h('button', { className:'action-btn', title:'Editar', onClick:()=>setModal(item),
-                        style:{ width:32, height:32, borderRadius:10, border:`1px solid ${T.border}`, background:'transparent', color:T.textSec, display:'flex', alignItems:'center', justifyContent:'center' } }, h(Icon,{name:'edit',size:14})),
-                    ))
-                  );
-                })
-          )
-        )
-      ),
-      h(Pagination, { page, setPage, total:filtered.length, pageSize:PAGE_SIZE })
+    h('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:20 } },
+      campaigns.map(c => h(CampaignCard, { key:c.id, campaign:c, onDonate:handleDonate }))
     ),
-    modal && h(InventoryForm, {
-      initial: modal === 'new' ? null : modal,
-      onClose: () => setModal(null),
+    modal && h(CampaignForm, {
+      onClose: () => setModal(false),
       onSave: (data) => {
-        if (modal === 'new') {
-          const nextId = Math.max(0, ...inventory.map(i=>i.id)) + 1;
-          setInventory(list => [...list, { id:nextId, entrada: todayLabel(), origem: data.origem || 'Cadastro manual', ...data }]);
-          setToast('Item adicionado ao estoque!');
-        } else {
-          setInventory(list => list.map(i => i.id === modal.id ? { ...i, ...data } : i));
-          setToast('Item atualizado!');
-        }
-        setModal(null);
+        const nextId = Math.max(0, ...campaigns.map(c=>c.id)) + 1;
+        setCampaigns(list => [...list, { id:nextId, arrecadado:0, doadores:0, ...data }]);
+        setToast('Campanha criada!');
+        setModal(false);
       }
     }),
     toast && h(Toast, { text: toast, onDone: () => setToast('') })
@@ -768,15 +791,16 @@ function App() {
   const [inventory, setInventory] = useState(initialInventory);
   const [donations, setDonations] = useState(initialDonations);
   const [beneficiaries, setBeneficiaries] = useState(initialBeneficiaries);
+  const [campaigns, setCampaigns] = useState(initialCampaigns);
 
   return h('div', { style:{ display:'flex', minHeight:'100vh', background:T.bg } },
     h(Sidebar, { screen, setScreen }),
     h('div', { style:{ flex:1, minWidth:0, display:'flex', flexDirection:'column' } },
       h(Header, { screen }),
       h('main', { style:{ padding:34, flex:1 } },
-        screen === 'dashboard' && h(Dashboard, { donations, inventory, beneficiaries, setScreen }),
+        screen === 'dashboard' && h(Dashboard, { donations, campaigns, beneficiaries, setScreen }),
         screen === 'donations' && h(Donations, { donations, setDonations }),
-        screen === 'inventory' && h(Inventory, { inventory, setInventory }),
+        screen === 'campaigns' && h(Campaigns, { campaigns, setCampaigns }),
         screen === 'beneficiaries' && h(Beneficiaries, { beneficiaries, setBeneficiaries }),
         screen === 'distributions' && h(Distributions, { beneficiaries, setBeneficiaries, inventory, setInventory }),
       )
